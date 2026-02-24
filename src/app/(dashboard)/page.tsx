@@ -271,6 +271,12 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="space-y-4">
               <div>
+                <p className="text-sm text-slate-500">Monthly score</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {Object.values(monthlyByMember).reduce((sum, n) => sum + n, 0)} pts
+                </p>
+              </div>
+              <div>
                 <p className="text-sm text-slate-500">Longest streak</p>
                 <p className="text-2xl font-bold text-orange-600">
                   {Math.max(...(members ?? []).map((m) => streakMap[m.id]?.longest_streak ?? 0), 0)} days
@@ -289,7 +295,10 @@ export default async function DashboardPage() {
                 </p>
               </div>
             </div>
-            <WeeklyChart data={last7Days} members={members ?? []} />
+            <div className="mt-4">
+              <p className="mb-2 text-sm font-medium text-slate-600">Last 7 days</p>
+              <WeeklyChart data={last7Days} members={members ?? []} />
+            </div>
           </CardContent>
         </Card>
 
@@ -297,21 +306,15 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-blue-500" />
-              Monthly Score
+              Last 7 Days · Activities
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-blue-600">
-              {Object.values(monthlyByMember).reduce((sum, n) => sum + n, 0)} pts
-            </p>
-            <div className="mt-4">
-              <p className="mb-2 text-sm font-medium text-slate-600">Last 7 Days · Completed Activities</p>
-              <ActivityLog
-                entries={activityEntries}
-                members={members ?? []}
-                showResetButton={family?.show_reset_button ?? false}
-              />
-            </div>
+            <ActivityLog
+              entries={activityEntries}
+              members={members ?? []}
+              showResetButton={family?.show_reset_button ?? false}
+            />
           </CardContent>
         </Card>
       </div>

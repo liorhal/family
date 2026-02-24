@@ -66,7 +66,7 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
 
   if (entries.length === 0) {
     return (
-      <p className="text-sm text-slate-500">No completed activities in the last 7 days.</p>
+      <p className="text-sm text-slate-500">No activities in the last 7 days.</p>
     );
   }
 
@@ -102,7 +102,7 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm">
                 <span className="font-medium">{entry.member_name}</span>
-                {" completed "}
+                {" · "}
                 <span className="text-slate-700 dark:text-slate-300">{entry.title}</span>
               </p>
               <p className="text-xs text-slate-500">
