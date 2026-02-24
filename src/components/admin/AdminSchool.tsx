@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSchoolTask, deleteSchoolTask, updateSchoolTask } from "@/app/actions";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +11,7 @@ import { Trash2, Pencil } from "lucide-react";
 import type { Member } from "@/lib/db/types";
 import type { SchoolTask } from "@/lib/db/types";
 import { getDayName } from "@/lib/utils";
+import { AdminSection } from "./AdminSection";
 import { DayCheckboxes } from "./DayCheckboxes";
 
 interface AdminSchoolProps {
@@ -24,6 +24,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   async function handleEdit(taskId: string, formData: FormData) {
     setLoading(true);
@@ -54,20 +55,20 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
     if (res.error) alert(res.error);
     else {
       (e.target as HTMLFormElement).reset();
+      setShowCreateForm(false);
       router.refresh();
     }
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>School Tasks</CardTitle>
-        <p className="text-sm text-slate-500">
-          Homework, exams, projects. Assign to members.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <AdminSection
+      title="School Tasks"
+      description="Homework, exams, projects. Assign to members."
+      createButtonLabel="Create new task"
+      onCreateClick={() => setShowCreateForm(true)}
+    >
+      {showCreateForm && (
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="member_id">Member</Label>
@@ -121,12 +122,18 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
               />
             </div>
           </div>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Creating..." : "Create Task"}
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={loading}>
+              {loading ? "Creating..." : "Create Task"}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setShowCreateForm(false)}>
+              Cancel
+            </Button>
+          </div>
         </form>
+      )}
 
-        <div className="space-y-2">
+      <div className="space-y-2">
           <p className="text-sm font-medium">School tasks</p>
           <ul className="space-y-2">
             {tasks.slice(0, 10).map((t) => (
@@ -231,7 +238,6 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
             ))}
           </ul>
         </div>
-      </CardContent>
-    </Card>
+    </AdminSection>
   );
 }

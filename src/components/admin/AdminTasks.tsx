@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createTask, deleteTask, updateTask } from "@/app/actions";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Pencil } from "lucide-react";
 import type { Member } from "@/lib/db/types";
 import type { Task } from "@/lib/db/types";
+import { AdminSection } from "./AdminSection";
 import { DayCheckboxes } from "./DayCheckboxes";
 import { getDayName } from "@/lib/utils";
 
@@ -24,6 +24,7 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   async function handleEdit(taskId: string, formData: FormData) {
     setLoading(true);
@@ -54,20 +55,20 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
     if (res.error) alert(res.error);
     else {
       (e.target as HTMLFormElement).reset();
+      setShowCreateForm(false);
       router.refresh();
     }
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>House Tasks</CardTitle>
-        <p className="text-sm text-slate-500">
-          Create tasks for the family. Kids can take and complete them.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <AdminSection
+      title="House Tasks"
+      description="Create tasks for the family. Kids can take and complete them."
+      createButtonLabel="Create new task"
+      onCreateClick={() => setShowCreateForm(true)}
+    >
+      {showCreateForm && (
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
@@ -125,12 +126,18 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
               </select>
             </div>
           </div>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Creating..." : "Create Task"}
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={loading}>
+              {loading ? "Creating..." : "Create Task"}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setShowCreateForm(false)}>
+              Cancel
+            </Button>
+          </div>
         </form>
+      )}
 
-        <div className="space-y-2">
+      <div className="space-y-2">
           <p className="text-sm font-medium">Recent tasks</p>
           <ul className="space-y-2">
             {tasks.slice(0, 10).map((t) => (
@@ -236,7 +243,6 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
             ))}
           </ul>
         </div>
-      </CardContent>
-    </Card>
+    </AdminSection>
   );
 }

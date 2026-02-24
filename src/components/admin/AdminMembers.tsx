@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createMember, updateMember } from "@/app/actions";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { MemberAvatar } from "@/components/MemberAvatar";
 import { AvatarPicker } from "./AvatarPicker";
+import { AdminSection } from "./AdminSection";
 import { Pencil } from "lucide-react";
 import type { Member } from "@/lib/db/types";
 
@@ -23,6 +23,7 @@ export function AdminMembers({ members }: AdminMembersProps) {
   const [avatar, setAvatar] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAvatar, setEditAvatar] = useState<string>("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -34,6 +35,7 @@ export function AdminMembers({ members }: AdminMembersProps) {
     else {
       (e.target as HTMLFormElement).reset();
       setAvatar("");
+      setShowCreateForm(false);
       router.refresh();
     }
   }
@@ -52,15 +54,14 @@ export function AdminMembers({ members }: AdminMembersProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Family Members</CardTitle>
-        <p className="text-sm text-slate-500">
-          Add new members. Select an avatar for each.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <AdminSection
+      title="Family Members"
+      description="Add new members. Select an avatar for each."
+      createButtonLabel="Create new member"
+      onCreateClick={() => setShowCreateForm(true)}
+    >
+      {showCreateForm && (
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-[200px] space-y-2">
               <Label htmlFor="name">Name</Label>
@@ -79,12 +80,18 @@ export function AdminMembers({ members }: AdminMembersProps) {
             </div>
           </div>
           <AvatarPicker name="avatar_url" value={avatar} onChange={setAvatar} />
-          <Button type="submit" disabled={loading}>
-            {loading ? "Adding..." : "Add Member"}
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={loading}>
+              {loading ? "Adding..." : "Add Member"}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setShowCreateForm(false)}>
+              Cancel
+            </Button>
+          </div>
         </form>
+      )}
 
-        <div className="space-y-2">
+      <div className="space-y-2">
           <p className="text-sm font-medium">Members</p>
           <div className="flex flex-wrap gap-3">
             {members.map((m) => (
@@ -144,7 +151,6 @@ export function AdminMembers({ members }: AdminMembersProps) {
             ))}
           </div>
         </div>
-      </CardContent>
-    </Card>
+    </AdminSection>
   );
 }
