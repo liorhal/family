@@ -3,12 +3,13 @@ import { format, startOfWeek, subDays } from "date-fns";
 
 import { debugLog } from "@/lib/debug-log";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ActivityLog } from "@/components/dashboard/ActivityLog";
 import { Leaderboard } from "@/components/dashboard/Leaderboard";
 import { RealtimeLeaderboard } from "@/components/dashboard/RealtimeLeaderboard";
 import { WeeklyChart } from "@/components/dashboard/WeeklyChart";
 import { MemberAvatar } from "@/components/MemberAvatar";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Trophy, Calendar } from "lucide-react";
+import { Flame, Trophy, Calendar, History } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -111,6 +112,63 @@ export default async function DashboardPage() {
     .order("due_date", { ascending: true })
     .limit(5);
 
+  // Activity log: last 7 days completed activities
+  const sevenDaysAgo = subDays(new Date(), 7).toISOString();
+  const { data: activityScores } = await supabase
+    .from("scores_log")
+    .select("id, member_id, source_type, source_id, score_delta, created_at")
+    .in("member_id", (members ?? []).map((m) => m.id))
+    .gte("created_at", sevenDaysAgo)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  const houseIds = (activityScores ?? [])
+    .filter((s) => s.source_type === "house" && s.source_id)
+    .map((s) => s.source_id as string);
+  const sportIds = (activityScores ?? [])
+    .filter((s) => s.source_type === "sport" && s.source_id)
+    .map((s) => s.source_id as string);
+  const schoolIds = (activityScores ?? [])
+    .filter((s) => s.source_type === "school" && s.source_id)
+    .map((s) => s.source_id as string);
+
+  const [houseTasksForLog, sportActivitiesForLog, schoolTasksForLog] = await Promise.all([
+    houseIds.length > 0
+      ? supabase.from("tasks").select("id, title").in("id", houseIds)
+      : Promise.resolve({ data: [] as { id: string; title: string }[] }),
+    sportIds.length > 0
+      ? supabase.from("sport_activities").select("id, title").in("id", sportIds)
+      : Promise.resolve({ data: [] as { id: string; title: string }[] }),
+    schoolIds.length > 0
+      ? supabase.from("school_tasks").select("id, title").in("id", schoolIds)
+      : Promise.resolve({ data: [] as { id: string; title: string }[] }),
+  ]);
+
+  const titleMap: Record<string, string> = {};
+  for (const t of houseTasksForLog.data ?? []) titleMap[`house:${t.id}`] = t.title;
+  for (const a of sportActivitiesForLog.data ?? []) titleMap[`sport:${a.id}`] = a.title;
+  for (const t of schoolTasksForLog.data ?? []) titleMap[`school:${t.id}`] = t.title;
+
+  const activityEntries = (activityScores ?? []).map((s) => {
+    const title =
+      s.source_type === "streak_bonus"
+        ? "Streak bonus"
+        : s.source_id
+          ? titleMap[`${s.source_type}:${s.source_id}`] ?? "Unknown"
+          : "Unknown";
+    const m = members?.find((x) => x.id === s.member_id);
+    return {
+      id: s.id,
+      member_id: s.member_id,
+      member_name: m?.name ?? "—",
+      member_avatar_url: m?.avatar_url ?? null,
+      source_type: s.source_type as "house" | "sport" | "school" | "streak_bonus",
+      title,
+      score_delta: s.score_delta,
+      created_at: s.created_at,
+    };
+  });
+
   return (
     <div className="space-y-8">
       <RealtimeLeaderboard />
@@ -178,6 +236,18 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5 text-slate-500" />
+            Last 7 Days · Completed Activities
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActivityLog entries={activityEntries} />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>

@@ -35,6 +35,9 @@ Thumbs.db
 coverage
 .nyc_output
 
+# TypeScript
+*.tsbuildinfo
+
 # Misc
 *.pem
 debug.log
