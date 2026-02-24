@@ -44,7 +44,7 @@ export async function createTask(formData: FormData) {
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
   const scheduled_days: number[] | null = Array.isArray(scheduledDaysRaw) && scheduledDaysRaw.length > 0
-    ? [...new Set(scheduledDaysRaw.map((d) => Math.max(0, Math.min(6, parseInt(String(d))))).filter((d) => !isNaN(d)))]
+    ? Array.from(new Set(scheduledDaysRaw.map((d) => Math.max(0, Math.min(6, parseInt(String(d))))).filter((d) => !isNaN(d))))
     : null;
 
   const { error } = await supabase.from("tasks").insert({
@@ -87,7 +87,7 @@ export async function updateTask(taskId: string, formData: FormData) {
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
   const scheduled_days: number[] | null = Array.isArray(scheduledDaysRaw) && scheduledDaysRaw.length > 0
-    ? [...new Set(scheduledDaysRaw.map((d) => Math.max(0, Math.min(6, parseInt(String(d))))).filter((d) => !isNaN(d)))]
+    ? Array.from(new Set(scheduledDaysRaw.map((d) => Math.max(0, Math.min(6, parseInt(String(d))))).filter((d) => !isNaN(d))))
     : null;
 
   const { error } = await supabase
@@ -546,7 +546,7 @@ export async function updateSportActivity(activityId: string, formData: FormData
   const type = (formData.get("type") as "weekly" | "extra") || "extra";
   const scheduledDaysRaw = formData.getAll("scheduled_days");
   const scheduled_days: number[] = Array.isArray(scheduledDaysRaw)
-    ? [...new Set(scheduledDaysRaw.map((d) => Math.max(0, Math.min(6, parseInt(String(d))))).filter((d) => !isNaN(d)))]
+    ? Array.from(new Set(scheduledDaysRaw.map((d) => Math.max(0, Math.min(6, parseInt(String(d))))).filter((d) => !isNaN(d))))
     : [];
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
 
@@ -600,7 +600,7 @@ export async function createSchoolTask(formData: FormData) {
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
   const scheduled_days: number[] | null = Array.isArray(scheduledDaysRaw) && scheduledDaysRaw.length > 0
-    ? [...new Set(scheduledDaysRaw.map((d) => Math.max(0, Math.min(6, parseInt(String(d))))).filter((d) => !isNaN(d)))]
+    ? Array.from(new Set(scheduledDaysRaw.map((d) => Math.max(0, Math.min(6, parseInt(String(d))))).filter((d) => !isNaN(d))))
     : null;
 
   const isAdmin = member.role === "admin";
@@ -636,7 +636,7 @@ export async function updateSchoolTask(taskId: string, formData: FormData) {
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
   const scheduled_days: number[] | null = Array.isArray(scheduledDaysRaw) && scheduledDaysRaw.length > 0
-    ? [...new Set(scheduledDaysRaw.map((d) => Math.max(0, Math.min(6, parseInt(String(d))))).filter((d) => !isNaN(d)))]
+    ? Array.from(new Set(scheduledDaysRaw.map((d) => Math.max(0, Math.min(6, parseInt(String(d))))).filter((d) => !isNaN(d))))
     : null;
 
   const { error } = await supabase
