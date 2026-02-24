@@ -80,10 +80,11 @@ export default async function TodayPage() {
       const t = (a as { tasks: unknown }).tasks;
       if (!t || typeof t !== "object" || !("family_id" in t)) return null;
       if ((t as { family_id: string }).family_id !== member.family_id) return null;
+      const task = t as unknown as { id: string; title: string; score_value: number };
       return {
-        id: (t as { id: string }).id,
-        title: (t as { title: string }).title,
-        score_value: (t as { score_value: number }).score_value,
+        id: task.id,
+        title: task.title,
+        score_value: task.score_value,
         assignee_id: (a as { member_id: string }).member_id,
       };
     })
