@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Pencil } from "lucide-react";
 import type { Member } from "@/lib/db/types";
 import type { SchoolTask } from "@/lib/db/types";
+import { getDayName } from "@/lib/utils";
 import { DayCheckboxes } from "./DayCheckboxes";
 
 interface AdminSchoolProps {
