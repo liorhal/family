@@ -8,14 +8,29 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
-import { format, subDays } from "date-fns";
 
-interface WeeklyChartProps {
-  data: { day: string; score: number }[];
+const MEMBER_COLORS = [
+  "#3b82f6", // blue
+  "#8b5cf6", // violet
+  "#ec4899", // pink
+  "#f59e0b", // amber
+  "#10b981", // emerald
+  "#6366f1", // indigo
+];
+
+interface Member {
+  id: string;
+  name: string;
 }
 
-export function WeeklyChart({ data }: WeeklyChartProps) {
+interface WeeklyChartProps {
+  data: Record<string, string | number>[];
+  members: Member[];
+}
+
+export function WeeklyChart({ data, members }: WeeklyChartProps) {
   return (
     <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -32,18 +47,25 @@ export function WeeklyChart({ data }: WeeklyChartProps) {
               borderRadius: "12px",
               border: "1px solid #e2e8f0",
             }}
+            formatter={(value: number, name: string) => [
+              `${value} pts`,
+              members.find((m) => m.id === name)?.name ?? name,
+            ]}
           />
-          <Bar
-            dataKey="score"
-            fill="url(#scoreGradient)"
-            radius={[4, 4, 0, 0]}
+          <Legend
+            formatter={(value) => members.find((m) => m.id === value)?.name ?? value}
+            wrapperStyle={{ fontSize: 12 }}
           />
-          <defs>
-            <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#8b5cf6" />
-            </linearGradient>
-          </defs>
+          {members.map((m, i) => (
+            <Bar
+              key={m.id}
+              dataKey={m.id}
+              stackId="family"
+              fill={MEMBER_COLORS[i % MEMBER_COLORS.length]}
+              radius={i === members.length - 1 ? [4, 4, 0, 0] : 0}
+              name={m.name}
+            />
+          ))}
         </BarChart>
       </ResponsiveContainer>
     </div>

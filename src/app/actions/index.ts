@@ -372,6 +372,70 @@ export async function completeSchoolTask(taskId: string) {
   return { success: true, score: task.score_value };
 }
 
+/** Reset (undo) a completed activity - removes score and marks source as incomplete */
+export async function resetActivity(scoreLogId: string, sourceType: string, sourceId: string | null) {
+  const { member, familyId } = await getCurrentMember();
+  if (!member || !familyId) return { error: "Unauthorized" };
+
+  const supabase = await createClient();
+
+  const { data: scoreRow } = await supabase
+    .from("scores_log")
+    .select("id, member_id, source_type, source_id")
+    .eq("id", scoreLogId)
+    .single();
+
+  if (!scoreRow) return { error: "Score not found" };
+
+  const { data: scoreMember } = await supabase
+    .from("members")
+    .select("family_id")
+    .eq("id", scoreRow.member_id)
+    .single();
+  if (!scoreMember || scoreMember.family_id !== familyId) return { error: "Unauthorized" };
+
+  if (scoreRow.source_type !== sourceType || scoreRow.source_id !== sourceId) {
+    return { error: "Mismatch" };
+  }
+
+  if (sourceType === "streak_bonus") {
+    return { error: "Cannot reset streak bonus" };
+  }
+
+  if (sourceType === "house" && sourceId) {
+    const { data: task } = await supabase
+      .from("tasks")
+      .select("id, recurring_daily, status, family_id")
+      .eq("id", sourceId)
+      .single();
+    if (!task || (task as { family_id: string }).family_id !== familyId) return { error: "Task not found" };
+
+    if (!task.recurring_daily) {
+      await supabase.from("task_assignments").update({ completed_at: null }).eq("task_id", sourceId);
+      await supabase.from("tasks").update({ status: "taken" }).eq("id", sourceId);
+    }
+  } else if (sourceType === "sport" && sourceId) {
+    const { data: act } = await supabase.from("sport_activities").select("id, member_id").eq("id", sourceId).single();
+    if (!act) return { error: "Activity not found" };
+    const actMember = await supabase.from("members").select("family_id").eq("id", act.member_id).single();
+    if (actMember.data?.family_id !== familyId) return { error: "Unauthorized" };
+    await supabase.from("sport_activities").update({ completed_at: null }).eq("id", sourceId);
+  } else if (sourceType === "school" && sourceId) {
+    const { data: sch } = await supabase.from("school_tasks").select("id, member_id").eq("id", sourceId).single();
+    if (!sch) return { error: "Task not found" };
+    const schMember = await supabase.from("members").select("family_id").eq("id", sch.member_id).single();
+    if (schMember.data?.family_id !== familyId) return { error: "Unauthorized" };
+    await supabase.from("school_tasks").update({ completed_at: null }).eq("id", sourceId);
+  }
+
+  const { error } = await supabase.from("scores_log").delete().eq("id", scoreLogId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/");
+  revalidatePath("/today");
+  return { success: true };
+}
+
 /** Update streak for a member after activity */
 async function updateStreak(memberId: string, familyId: string) {
   const supabase = await createClient();

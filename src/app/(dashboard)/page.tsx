@@ -79,14 +79,17 @@ export default async function DashboardPage() {
   const memberIds = (members ?? []).map((m) => m.id);
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = subDays(new Date(), 6 - i);
-    return {
+    const row: Record<string, string | number> = {
       day: format(d, "EEE"),
-      score: (scores ?? []).filter(
+    };
+    for (const m of members ?? []) {
+      row[m.id] = (scores ?? []).filter(
         (s) =>
           new Date(s.created_at).toDateString() === d.toDateString() &&
-          memberIds.includes(s.member_id)
-      ).reduce((sum, s) => sum + s.score_delta, 0),
-    };
+          s.member_id === m.id
+      ).reduce((sum, s) => sum + s.score_delta, 0);
+    }
+    return row;
   });
 
   const { data: tasks } = await supabase
@@ -163,6 +166,7 @@ export default async function DashboardPage() {
       member_name: m?.name ?? "—",
       member_avatar_url: m?.avatar_url ?? null,
       source_type: s.source_type as "house" | "sport" | "school" | "streak_bonus",
+      source_id: s.source_id,
       title,
       score_delta: s.score_delta,
       created_at: s.created_at,
@@ -232,7 +236,7 @@ export default async function DashboardPage() {
             <p className="text-3xl font-bold text-blue-600">
               {weeklyByMember[member.id] ?? 0} pts
             </p>
-            <WeeklyChart data={last7Days} />
+            <WeeklyChart data={last7Days} members={members ?? []} />
           </CardContent>
         </Card>
       </div>
@@ -245,7 +249,7 @@ export default async function DashboardPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ActivityLog entries={activityEntries} />
+          <ActivityLog entries={activityEntries} members={members ?? []} />
         </CardContent>
       </Card>
 

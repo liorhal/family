@@ -223,6 +223,10 @@ DROP POLICY IF EXISTS "Service role inserts scores" ON scores_log;
 CREATE POLICY "Service role inserts scores" ON scores_log FOR INSERT
   WITH CHECK (member_id IN (SELECT id FROM members WHERE family_id = get_my_family_id()));
 
+DROP POLICY IF EXISTS "Family can delete scores" ON scores_log;
+CREATE POLICY "Family can delete scores" ON scores_log FOR DELETE
+  USING (member_id IN (SELECT id FROM members WHERE family_id = get_my_family_id()));
+
 DROP POLICY IF EXISTS "Family can view streaks" ON streaks;
 CREATE POLICY "Family can view streaks" ON streaks FOR SELECT
   USING (member_id IN (SELECT id FROM members WHERE family_id = get_my_family_id()));
