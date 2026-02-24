@@ -24,6 +24,7 @@ interface TakenTask {
   title: string;
   score_value: number;
   assignee_id: string;
+  deadline?: string | null;
 }
 
 interface OpenTask {
