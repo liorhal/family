@@ -6,6 +6,7 @@ import { AdminTasks } from "@/components/admin/AdminTasks";
 import { AdminSport } from "@/components/admin/AdminSport";
 import { AdminSchool } from "@/components/admin/AdminSchool";
 import { AdminPoints } from "@/components/admin/AdminPoints";
+import { AdminSettings } from "@/components/admin/AdminSettings";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -47,9 +48,17 @@ export default async function AdminPage() {
     .in("member_id", (members ?? []).map((m) => m.id))
     .order("due_date", { ascending: true });
 
+  const { data: family } = await supabase
+    .from("families")
+    .select("show_reset_button")
+    .eq("id", member.family_id)
+    .single();
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
+
+      <AdminSettings showResetButton={family?.show_reset_button ?? false} />
 
       <AdminMembers members={members ?? []} />
 

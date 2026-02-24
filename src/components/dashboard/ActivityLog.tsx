@@ -29,6 +29,7 @@ interface Member {
 interface ActivityLogProps {
   entries: ActivityEntry[];
   members: Member[];
+  showResetButton?: boolean;
 }
 
 const sourceBadgeVariant: Record<ActivityEntry["source_type"], "house" | "sport" | "school" | "streak" | "fine"> = {
@@ -40,7 +41,7 @@ const sourceBadgeVariant: Record<ActivityEntry["source_type"], "house" | "sport"
   fine: "fine",
 };
 
-export function ActivityLog({ entries, members }: ActivityLogProps) {
+export function ActivityLog({ entries, members, showResetButton = false }: ActivityLogProps) {
   const router = useRouter();
   const [filterMemberId, setFilterMemberId] = useState<string>("");
   const [resettingId, setResettingId] = useState<string | null>(null);
@@ -51,8 +52,11 @@ export function ActivityLog({ entries, members }: ActivityLogProps) {
       : entries.filter((e) => e.member_id === filterMemberId);
 
   async function handleReset(entry: ActivityEntry) {
-    if (["streak_bonus", "bonus", "fine"].includes(entry.source_type)) return;
-    if (!confirm(`Reset "${entry.title}"? This will undo the completion.`)) return;
+    if (entry.source_type === "streak_bonus") return;
+    const msg = ["bonus", "fine"].includes(entry.source_type)
+      ? `Remove this ${entry.source_type} entry?`
+      : `Reset "${entry.title}"? This will undo the completion.`;
+    if (!confirm(msg)) return;
     setResettingId(entry.id);
     const res = await resetActivity(entry.id, entry.source_type, entry.source_id);
     setResettingId(null);
@@ -112,7 +116,7 @@ export function ActivityLog({ entries, members }: ActivityLogProps) {
               <span className={`text-sm font-medium ${entry.score_delta >= 0 ? "text-green-600" : "text-red-600"}`}>
                 {entry.score_delta >= 0 ? "+" : ""}{entry.score_delta}
               </span>
-              {!["streak_bonus", "bonus", "fine"].includes(entry.source_type) && (
+              {showResetButton && entry.source_type !== "streak_bonus" && (
                 <Button
                   variant="ghost"
                   size="icon"

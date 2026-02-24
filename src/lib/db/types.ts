@@ -7,6 +7,7 @@ export type ScoreSourceType = "house" | "sport" | "school" | "streak_bonus" | "b
 export interface Family {
   id: string;
   name: string;
+  show_reset_button: boolean;
   created_at: string;
 }
 

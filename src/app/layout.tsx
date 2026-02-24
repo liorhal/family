@@ -3,7 +3,10 @@ import "./globals.css";
 import { debugLog } from "@/lib/debug-log";
 
 export const metadata: Metadata = {
-  title: "Family Productivity",
+  title: {
+    default: "Family Dashboard",
+    template: "%s",
+  },
   description: "Gamified productivity for families",
 };
 

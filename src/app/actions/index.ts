@@ -398,8 +398,8 @@ export async function resetActivity(scoreLogId: string, sourceType: string, sour
     return { error: "Mismatch" };
   }
 
-  if (["streak_bonus", "bonus", "fine"].includes(sourceType)) {
-    return { error: "Cannot reset bonus or fine entries" };
+  if (sourceType === "streak_bonus") {
+    return { error: "Cannot reset streak bonus" };
   }
 
   if (sourceType === "house" && sourceId) {
@@ -591,6 +591,28 @@ export async function addBonusFine(formData: FormData) {
     score_delta: points,
     description,
   });
+
+  if (error) return { error: error.message };
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/today");
+  return { success: true };
+}
+
+/** Update family settings (admin only) */
+export async function updateFamilySettings(formData: FormData) {
+  const { member, familyId } = await getCurrentMember();
+  if (!member || !familyId || member.role !== "admin") {
+    return { error: "Unauthorized" };
+  }
+
+  const supabase = await createClient();
+  const show_reset_button = formData.get("show_reset_button") === "true";
+
+  const { error } = await supabase
+    .from("families")
+    .update({ show_reset_button })
+    .eq("id", familyId);
 
   if (error) return { error: error.message };
   revalidatePath("/");

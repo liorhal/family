@@ -1,0 +1,1 @@
+ALTER TABLE families ADD COLUMN IF NOT EXISTS show_reset_button BOOLEAN DEFAULT false;

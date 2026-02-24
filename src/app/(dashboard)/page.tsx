@@ -1,7 +1,32 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { format, startOfMonth, endOfMonth, subMonths, subDays, differenceInDays } from "date-fns";
 
 import { debugLog } from "@/lib/debug-log";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { title: "Family Dashboard" };
+
+  const { data: member } = await supabase
+    .from("members")
+    .select("family_id")
+    .eq("user_id", user.id)
+    .single();
+  if (!member) return { title: "Family Dashboard" };
+
+  const { data: family } = await supabase
+    .from("families")
+    .select("name")
+    .eq("id", member.family_id)
+    .single();
+
+  const title = family?.name ? `${family.name} Family Dashboard` : "Family Dashboard";
+  return { title };
+}
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivityLog } from "@/components/dashboard/ActivityLog";
 import { Leaderboard } from "@/components/dashboard/Leaderboard";
@@ -9,7 +34,7 @@ import { RealtimeLeaderboard } from "@/components/dashboard/RealtimeLeaderboard"
 import { WeeklyChart } from "@/components/dashboard/WeeklyChart";
 import { MemberAvatar } from "@/components/MemberAvatar";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Trophy, Calendar, History } from "lucide-react";
+import { Flame, Trophy, Calendar } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -42,6 +67,12 @@ export default async function DashboardPage() {
   // #region agent log
   debugLog("dashboard/page.tsx", "dashboard_before_members", { hypothesisId: "H4", familyId });
   // #endregion
+  const { data: family } = await supabase
+    .from("families")
+    .select("name, show_reset_button")
+    .eq("id", familyId)
+    .single();
+
   const { data: members } = await supabase
     .from("members")
     .select("*")
@@ -207,7 +238,7 @@ export default async function DashboardPage() {
       <RealtimeLeaderboard />
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">
-          Family Dashboard
+          {family?.name ? `${family.name} Family Dashboard` : "Family Dashboard"}
         </h1>
         <Button asChild size="lg">
           <Link href="/today">
@@ -258,6 +289,7 @@ export default async function DashboardPage() {
                 </p>
               </div>
             </div>
+            <WeeklyChart data={last7Days} members={members ?? []} />
           </CardContent>
         </Card>
 
@@ -272,22 +304,17 @@ export default async function DashboardPage() {
             <p className="text-3xl font-bold text-blue-600">
               {Object.values(monthlyByMember).reduce((sum, n) => sum + n, 0)} pts
             </p>
-            <WeeklyChart data={last7Days} members={members ?? []} />
+            <div className="mt-4">
+              <p className="mb-2 text-sm font-medium text-slate-600">Last 7 Days · Completed Activities</p>
+              <ActivityLog
+                entries={activityEntries}
+                members={members ?? []}
+                showResetButton={family?.show_reset_button ?? false}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <History className="h-5 w-5 text-slate-500" />
-            Last 7 Days · Completed Activities
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ActivityLog entries={activityEntries} members={members ?? []} />
-        </CardContent>
-      </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
