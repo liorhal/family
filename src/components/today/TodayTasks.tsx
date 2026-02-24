@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import { motion } from "framer-motion";
+import { playSuccessSound } from "@/lib/celebration";
+import { CelebrationOverlay } from "@/components/CelebrationOverlay";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +82,9 @@ export function TodayTasks({
   const [completing, setCompleting] = useState<string | null>(null);
   const [takingTaskId, setTakingTaskId] = useState<string | null>(null);
   const [assigneeForTask, setAssigneeForTask] = useState<Record<string, string>>({});
+  const [celebrationMember, setCelebrationMember] = useState<Member | null>(null);
+
+  const getMember = (id: string) => members.find((m) => m.id === id);
 
   async function handleTakeTask(taskId: string) {
     const assigneeId = assigneeForTask[taskId] || members[0]?.id;
@@ -108,34 +113,46 @@ export function TodayTasks({
   }
 
   async function handleCompleteTask(taskId: string) {
+    const task = takenTasks.find((t) => t.id === taskId);
+    const member = task ? getMember(task.assignee_id) : null;
     setCompleting(taskId);
     const res = await completeTask(taskId);
     setCompleting(null);
     if (res.error) alert(res.error);
     else {
+      playSuccessSound();
       fireConfetti();
+      if (member) setCelebrationMember(member);
       router.refresh();
     }
   }
 
   async function handleCompleteSport(activityId: string) {
+    const activity = sportActivities.find((a) => a.id === activityId);
+    const member = activity?.member_id ? getMember(activity.member_id) : null;
     setCompleting(activityId);
     const res = await completeSportActivity(activityId);
     setCompleting(null);
     if (res.error) alert(res.error);
     else {
+      playSuccessSound();
       fireConfetti();
+      if (member) setCelebrationMember(member);
       router.refresh();
     }
   }
 
   async function handleCompleteSchool(taskId: string) {
+    const task = schoolTasks.find((t) => t.id === taskId);
+    const member = task?.member_id ? getMember(task.member_id) : null;
     setCompleting(taskId);
     const res = await completeSchoolTask(taskId);
     setCompleting(null);
     if (res.error) alert(res.error);
     else {
+      playSuccessSound();
       fireConfetti();
+      if (member) setCelebrationMember(member);
       router.refresh();
     }
   }
@@ -157,10 +174,15 @@ export function TodayTasks({
     );
   }
 
-  const getMember = (id: string) => members.find((m) => m.id === id);
-
   return (
     <div className="space-y-6">
+      {celebrationMember && (
+        <CelebrationOverlay
+          memberName={celebrationMember.name}
+          avatarUrl={celebrationMember.avatar_url}
+          onComplete={() => setCelebrationMember(null)}
+        />
+      )}
       {takenTasks.length > 0 && (
         <Card>
           <CardHeader>
