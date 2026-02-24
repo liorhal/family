@@ -398,8 +398,8 @@ export async function resetActivity(scoreLogId: string, sourceType: string, sour
     return { error: "Mismatch" };
   }
 
-  if (sourceType === "streak_bonus") {
-    return { error: "Cannot reset streak bonus" };
+  if (["streak_bonus", "bonus", "fine"].includes(sourceType)) {
+    return { error: "Cannot reset bonus or fine entries" };
   }
 
   if (sourceType === "house" && sourceId) {
@@ -490,22 +490,23 @@ async function updateStreak(memberId: string, familyId: string) {
   );
 }
 
-/** Calculate weekly scores for a member */
-export async function calculateWeeklyScores(memberId: string) {
+/** Calculate monthly scores for a member */
+export async function calculateMonthlyScores(memberId: string) {
   const supabase = await createClient();
   const now = new Date();
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay());
-  weekStart.setHours(0, 0, 0, 0);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const { data } = await supabase
     .from("scores_log")
-    .select("score_delta")
+    .select("source_type, score_delta")
     .eq("member_id", memberId)
-    .gte("created_at", weekStart.toISOString());
+    .gte("created_at", monthStart.toISOString());
 
-  const weekly = (data ?? []).reduce((sum, r) => sum + r.score_delta, 0);
-  return weekly;
+  const monthly = (data ?? []).reduce(
+    (sum, r) => sum + (r.source_type === "fine" ? -r.score_delta : r.score_delta),
+    0
+  );
+  return monthly;
 }
 
 /** Create member (admin) */
@@ -551,6 +552,45 @@ export async function updateMember(memberId: string, formData: FormData) {
     .update({ name, role, avatar_url: avatar_url || null })
     .eq("id", memberId)
     .eq("family_id", familyId);
+
+  if (error) return { error: error.message };
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/today");
+  return { success: true };
+}
+
+/** Add bonus or fine points for a member (admin only) */
+export async function addBonusFine(formData: FormData) {
+  const { member, familyId } = await getCurrentMember();
+  if (!member || !familyId || member.role !== "admin") {
+    return { error: "Unauthorized" };
+  }
+
+  const supabase = await createClient();
+  const targetMemberId = formData.get("member_id") as string;
+  const type = (formData.get("type") as "bonus" | "fine") || "bonus";
+  const points = Math.max(0, parseInt(formData.get("points") as string) || 0);
+  const description = (formData.get("description") as string)?.trim() || null;
+
+  if (points === 0) return { error: "Points must be greater than 0" };
+
+  const { data: targetMember } = await supabase
+    .from("members")
+    .select("family_id")
+    .eq("id", targetMemberId)
+    .single();
+  if (!targetMember || targetMember.family_id !== familyId) {
+    return { error: "Member not found" };
+  }
+
+  const { error } = await supabase.from("scores_log").insert({
+    member_id: targetMemberId,
+    source_type: type,
+    source_id: null,
+    score_delta: points,
+    description,
+  });
 
   if (error) return { error: error.message };
   revalidatePath("/");

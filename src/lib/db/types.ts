@@ -2,7 +2,7 @@ export type MemberRole = "admin" | "kid";
 export type TaskStatus = "open" | "taken" | "completed" | "expired";
 export type SportType = "weekly" | "extra";
 export type SchoolTaskType = "homework" | "exam" | "project";
-export type ScoreSourceType = "house" | "sport" | "school" | "streak_bonus";
+export type ScoreSourceType = "house" | "sport" | "school" | "streak_bonus" | "bonus" | "fine";
 
 export interface Family {
   id: string;
@@ -72,6 +72,7 @@ export interface ScoresLog {
   source_type: ScoreSourceType;
   source_id: string | null;
   score_delta: number;
+  description: string | null;
   created_at: string;
 }
 

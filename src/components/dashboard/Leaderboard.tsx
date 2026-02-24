@@ -8,12 +8,12 @@ import type { MemberWithStreak } from "@/lib/db/types";
 
 interface LeaderboardProps {
   members: MemberWithStreak[];
-  weeklyScores: Record<string, number>;
+  monthlyScores: Record<string, number>;
 }
 
-export function Leaderboard({ members, weeklyScores }: LeaderboardProps) {
+export function Leaderboard({ members, monthlyScores }: LeaderboardProps) {
   const sorted = [...members].sort(
-    (a, b) => (weeklyScores[b.id] ?? 0) - (weeklyScores[a.id] ?? 0)
+    (a, b) => (monthlyScores[b.id] ?? 0) - (monthlyScores[a.id] ?? 0)
   );
 
   return (
@@ -41,7 +41,7 @@ export function Leaderboard({ members, weeklyScores }: LeaderboardProps) {
               <p className="font-medium">{member.name}</p>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-blue-600">
-                  {weeklyScores[member.id] ?? 0} pts
+                  {monthlyScores[member.id] ?? 0} pts
                 </span>
                 {(member.current_streak ?? 0) > 0 && (
                   <Badge variant="streak" className="gap-1">

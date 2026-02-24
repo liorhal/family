@@ -14,7 +14,7 @@ export interface ActivityEntry {
   member_id: string;
   member_name: string;
   member_avatar_url: string | null;
-  source_type: "house" | "sport" | "school" | "streak_bonus";
+  source_type: "house" | "sport" | "school" | "streak_bonus" | "bonus" | "fine";
   source_id: string | null;
   title: string;
   score_delta: number;
@@ -31,11 +31,13 @@ interface ActivityLogProps {
   members: Member[];
 }
 
-const sourceBadgeVariant = {
-  house: "house" as const,
-  sport: "sport" as const,
-  school: "school" as const,
-  streak_bonus: "streak" as const,
+const sourceBadgeVariant: Record<ActivityEntry["source_type"], "house" | "sport" | "school" | "streak" | "fine"> = {
+  house: "house",
+  sport: "sport",
+  school: "school",
+  streak_bonus: "streak",
+  bonus: "streak",
+  fine: "fine",
 };
 
 export function ActivityLog({ entries, members }: ActivityLogProps) {
@@ -49,7 +51,7 @@ export function ActivityLog({ entries, members }: ActivityLogProps) {
       : entries.filter((e) => e.member_id === filterMemberId);
 
   async function handleReset(entry: ActivityEntry) {
-    if (entry.source_type === "streak_bonus") return;
+    if (["streak_bonus", "bonus", "fine"].includes(entry.source_type)) return;
     if (!confirm(`Reset "${entry.title}"? This will undo the completion.`)) return;
     setResettingId(entry.id);
     const res = await resetActivity(entry.id, entry.source_type, entry.source_id);
@@ -105,10 +107,12 @@ export function ActivityLog({ entries, members }: ActivityLogProps) {
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Badge variant={sourceBadgeVariant[entry.source_type]} className="text-xs">
-                {entry.source_type === "house" ? "House" : entry.source_type === "sport" ? "Sport" : entry.source_type === "school" ? "School" : "Bonus"}
+                {entry.source_type === "house" ? "House" : entry.source_type === "sport" ? "Sport" : entry.source_type === "school" ? "School" : entry.source_type === "bonus" ? "Bonus" : entry.source_type === "fine" ? "Fine" : "Bonus"}
               </Badge>
-              <span className="text-sm font-medium text-green-600">+{entry.score_delta}</span>
-              {entry.source_type !== "streak_bonus" && (
+              <span className={`text-sm font-medium ${entry.score_delta >= 0 ? "text-green-600" : "text-red-600"}`}>
+                {entry.score_delta >= 0 ? "+" : ""}{entry.score_delta}
+              </span>
+              {!["streak_bonus", "bonus", "fine"].includes(entry.source_type) && (
                 <Button
                   variant="ghost"
                   size="icon"

@@ -5,6 +5,7 @@ import { AdminMembers } from "@/components/admin/AdminMembers";
 import { AdminTasks } from "@/components/admin/AdminTasks";
 import { AdminSport } from "@/components/admin/AdminSport";
 import { AdminSchool } from "@/components/admin/AdminSchool";
+import { AdminPoints } from "@/components/admin/AdminPoints";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -51,6 +52,8 @@ export default async function AdminPage() {
       <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
 
       <AdminMembers members={members ?? []} />
+
+      <AdminPoints members={members ?? []} />
 
       <AdminTasks tasks={tasks ?? []} members={members ?? []} />
 

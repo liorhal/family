@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { format, startOfWeek, subDays } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, subDays, differenceInDays } from "date-fns";
 
 import { debugLog } from "@/lib/debug-log";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,16 +56,41 @@ export default async function DashboardPage() {
     (streaks ?? []).map((s) => [s.member_id, s])
   );
 
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
+  const now = new Date();
+  const monthStart = startOfMonth(now);
   const { data: scores } = await supabase
     .from("scores_log")
-    .select("member_id, score_delta, created_at")
-    .gte("created_at", weekStart.toISOString());
+    .select("member_id, source_type, score_delta, created_at")
+    .gte("created_at", monthStart.toISOString());
 
-  const weeklyByMember: Record<string, number> = {};
+  const monthlyByMember: Record<string, number> = {};
   for (const s of scores ?? []) {
-    weeklyByMember[s.member_id] = (weeklyByMember[s.member_id] ?? 0) + s.score_delta;
+    const delta = s.source_type === "fine" ? -s.score_delta : s.score_delta;
+    monthlyByMember[s.member_id] = (monthlyByMember[s.member_id] ?? 0) + delta;
   }
+
+  // Previous month scores for winner
+  const prevMonthStart = startOfMonth(subMonths(now, 1));
+  const prevMonthEnd = endOfMonth(subMonths(now, 1));
+  const { data: prevMonthScores } = await supabase
+    .from("scores_log")
+    .select("member_id, source_type, score_delta")
+    .gte("created_at", prevMonthStart.toISOString())
+    .lte("created_at", prevMonthEnd.toISOString());
+
+  const prevMonthByMember: Record<string, number> = {};
+  for (const s of prevMonthScores ?? []) {
+    const delta = s.source_type === "fine" ? -s.score_delta : s.score_delta;
+    prevMonthByMember[s.member_id] = (prevMonthByMember[s.member_id] ?? 0) + delta;
+  }
+  const prevMonthWinnerId = Object.entries(prevMonthByMember).sort(
+    ([, a], [, b]) => b - a
+  )[0]?.[0] ?? null;
+  const prevMonthWinner = prevMonthWinnerId
+    ? members?.find((m) => m.id === prevMonthWinnerId)
+    : null;
+
+  const daysToEndOfMonth = differenceInDays(endOfMonth(now), now) + 1;
 
   // #region agent log
   debugLog("dashboard/page.tsx", "dashboard_data_ready", { hypothesisId: "H4", membersCount: (members ?? []).length });
@@ -87,7 +112,7 @@ export default async function DashboardPage() {
         (s) =>
           new Date(s.created_at).toDateString() === d.toDateString() &&
           s.member_id === m.id
-      ).reduce((sum, s) => sum + s.score_delta, 0);
+      ).reduce((sum, s) => sum + (s.source_type === "fine" ? -s.score_delta : s.score_delta), 0);
     }
     return row;
   });
@@ -119,7 +144,7 @@ export default async function DashboardPage() {
   const sevenDaysAgo = subDays(new Date(), 7).toISOString();
   const { data: activityScores } = await supabase
     .from("scores_log")
-    .select("id, member_id, source_type, source_id, score_delta, created_at")
+    .select("id, member_id, source_type, source_id, score_delta, description, created_at")
     .in("member_id", (members ?? []).map((m) => m.id))
     .gte("created_at", sevenDaysAgo)
     .order("created_at", { ascending: false })
@@ -156,19 +181,23 @@ export default async function DashboardPage() {
     const title =
       s.source_type === "streak_bonus"
         ? "Streak bonus"
-        : s.source_id
-          ? titleMap[`${s.source_type}:${s.source_id}`] ?? "Unknown"
-          : "Unknown";
+        : s.source_type === "bonus"
+          ? (s as { description?: string | null }).description || "Bonus"
+          : s.source_type === "fine"
+            ? (s as { description?: string | null }).description || "Fine"
+            : s.source_id
+              ? titleMap[`${s.source_type}:${s.source_id}`] ?? "Unknown"
+              : "Unknown";
     const m = members?.find((x) => x.id === s.member_id);
     return {
       id: s.id,
       member_id: s.member_id,
       member_name: m?.name ?? "—",
       member_avatar_url: m?.avatar_url ?? null,
-      source_type: s.source_type as "house" | "sport" | "school" | "streak_bonus",
+      source_type: s.source_type as "house" | "sport" | "school" | "streak_bonus" | "bonus" | "fine",
       source_id: s.source_id,
       title,
-      score_delta: s.score_delta,
+      score_delta: s.source_type === "fine" ? -s.score_delta : s.score_delta,
       created_at: s.created_at,
     };
   });
@@ -197,7 +226,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Leaderboard members={membersWithStreak} weeklyScores={weeklyByMember} />
+            <Leaderboard members={membersWithStreak} monthlyScores={monthlyByMember} />
           </CardContent>
         </Card>
 
@@ -205,20 +234,27 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Flame className="h-5 w-5 text-orange-500" />
-              Your Streak
+              Statistics
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-orange-100 px-6 py-4 dark:bg-orange-900/30">
-                <p className="text-3xl font-bold text-orange-600">
-                  {streakMap[member.id]?.current_streak ?? 0}
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-slate-500">Longest streak</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {Math.max(...(members ?? []).map((m) => streakMap[m.id]?.longest_streak ?? 0), 0)} days
                 </p>
-                <p className="text-sm text-orange-700">Current streak</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-700">
-                  Longest: {streakMap[member.id]?.longest_streak ?? 0}
+                <p className="text-sm text-slate-500">Previous month winner</p>
+                <p className="text-2xl font-bold text-amber-600">
+                  {prevMonthWinner ? prevMonthWinner.name : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Days to end of month</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {daysToEndOfMonth} day{daysToEndOfMonth !== 1 ? "s" : ""}
                 </p>
               </div>
             </div>
@@ -229,12 +265,12 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-blue-500" />
-              Weekly Score
+              Monthly Score
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-blue-600">
-              {weeklyByMember[member.id] ?? 0} pts
+              {Object.values(monthlyByMember).reduce((sum, n) => sum + n, 0)} pts
             </p>
             <WeeklyChart data={last7Days} members={members ?? []} />
           </CardContent>
