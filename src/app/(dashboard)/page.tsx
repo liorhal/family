@@ -382,23 +382,13 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Today Activities</CardTitle>
-          <p className="text-sm text-slate-500">
-            House, sport, and school activities for today. Assign, take, or complete from here.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <DashboardTodayActivities
-            takenTasks={takenTasks}
-            openTasks={openTasks}
-            sportActivities={sportActivities}
-            schoolTasks={schoolTasks}
-            members={members ?? []}
-          />
-        </CardContent>
-      </Card>
+      <DashboardTodayActivities
+        takenTasks={takenTasks}
+        openTasks={openTasks}
+        sportActivities={sportActivities}
+        schoolTasks={schoolTasks}
+        members={members ?? []}
+      />
     </div>
   );
 }

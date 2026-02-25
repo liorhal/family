@@ -6,6 +6,7 @@ import confetti from "canvas-confetti";
 import { motion } from "framer-motion";
 import { playSuccessSound } from "@/lib/celebration";
 import { CelebrationOverlay } from "@/components/CelebrationOverlay";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -150,22 +151,13 @@ export function DashboardTodayActivities({
     }
   }
 
-  const hasItems =
-    takenTasks.length > 0 ||
-    openTasks.length > 0 ||
-    sportActivities.length > 0 ||
-    schoolTasks.length > 0;
-
-  if (!hasItems) {
-    return (
-      <p className="text-slate-500">Nothing on your plate today. Enjoy! 🎉</p>
-    );
-  }
-
   const iconBtn = "h-8 w-8 shrink-0";
+  const hasHouse = takenTasks.length > 0 || openTasks.length > 0;
+  const hasSport = sportActivities.length > 0;
+  const hasSchool = schoolTasks.length > 0;
 
   return (
-    <div className="space-y-3">
+    <div className="grid gap-6 lg:grid-cols-3">
       {celebrationMember && (
         <CelebrationOverlay
           memberName={celebrationMember.name}
@@ -174,7 +166,19 @@ export function DashboardTodayActivities({
         />
       )}
 
-      {takenTasks.map((t) => {
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Home className="h-5 w-5 text-green-600" />
+            House Tasks
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!hasHouse ? (
+            <p className="text-sm text-slate-500">No house tasks today</p>
+          ) : (
+            <div className="space-y-2">
+              {takenTasks.map((t) => {
         const m = getMember(t.assignee_id);
         return (
           <motion.div
@@ -221,9 +225,8 @@ export function DashboardTodayActivities({
             </div>
           </motion.div>
         );
-      })}
-
-      {openTasks.map((t) => (
+              })}
+              {openTasks.map((t) => (
         <motion.div
           key={`house-open-${t.id}`}
           layout
@@ -260,9 +263,25 @@ export function DashboardTodayActivities({
             </Button>
           </div>
         </motion.div>
-      ))}
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {sportActivities.map((a) => {
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Dumbbell className="h-5 w-5 text-purple-600" />
+            Sport Activities
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!hasSport ? (
+            <p className="text-sm text-slate-500">No sport activities today</p>
+          ) : (
+            <div className="space-y-2">
+              {sportActivities.map((a) => {
         const m = a.member_id ? getMember(a.member_id) : null;
         return (
           <motion.div
@@ -297,9 +316,25 @@ export function DashboardTodayActivities({
             </Button>
           </motion.div>
         );
-      })}
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {schoolTasks.map((t) => {
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-blue-600" />
+            School Tasks
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!hasSchool ? (
+            <p className="text-sm text-slate-500">No school tasks today</p>
+          ) : (
+            <div className="space-y-2">
+              {schoolTasks.map((t) => {
         const m = t.member_id ? getMember(t.member_id) : null;
         return (
           <motion.div
@@ -335,7 +370,11 @@ export function DashboardTodayActivities({
             </Button>
           </motion.div>
         );
-      })}
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
