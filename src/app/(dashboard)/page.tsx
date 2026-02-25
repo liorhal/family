@@ -180,7 +180,6 @@ export default async function DashboardPage() {
       return da.localeCompare(db);
     });
 
-  const memberIds = (members ?? []).map((m) => m.id);
   const { data: sportActivitiesRaw } = await supabase
     .from("sport_activities")
     .select("*")
