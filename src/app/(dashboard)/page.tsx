@@ -172,16 +172,20 @@ export default async function DashboardPage() {
         t.scheduled_days.includes(dayOfWeek)
     )
     .sort((a, b) => {
+      const aWeekly = (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+      const bWeekly = (b.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+      if (bWeekly !== aWeekly) return bWeekly - aWeekly;
       const da = a.deadline ?? "9999-12-31";
       const db = b.deadline ?? "9999-12-31";
       return da.localeCompare(db);
     });
 
+  const memberIds = (members ?? []).map((m) => m.id);
   const { data: sportActivitiesRaw } = await supabase
     .from("sport_activities")
     .select("*")
-    .in("member_id", (members ?? []).map((m) => m.id))
-    .is("completed_at", null);
+    .is("completed_at", null)
+    .or(memberIds.length > 0 ? `member_id.in.(${memberIds.join(",")}),member_id.is.null` : "member_id.is.null");
 
   const sportActivities = (sportActivitiesRaw ?? [])
     .filter(
@@ -190,8 +194,11 @@ export default async function DashboardPage() {
         ((a.scheduled_days?.length ?? 0) > 0 && a.scheduled_days!.includes(dayOfWeek))
     )
     .sort((a, b) => {
-      if (a.type === "extra" && b.type !== "extra") return -1;
-      if (a.type !== "extra" && b.type === "extra") return 1;
+      const aWeekly = a.type === "weekly" || (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+      const bWeekly = b.type === "weekly" || (b.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+      if (bWeekly !== aWeekly) return bWeekly - aWeekly;
+      if (a.type === "extra" && b.type !== "extra") return 1;
+      if (a.type !== "extra" && b.type === "extra") return -1;
       const dayA = (a.scheduled_days?.[0] ?? 7) as number;
       const dayB = (b.scheduled_days?.[0] ?? 7) as number;
       return dayA - dayB;
@@ -210,25 +217,34 @@ export default async function DashboardPage() {
       !t.scheduled_days ||
       t.scheduled_days.length === 0 ||
       t.scheduled_days.includes(dayOfWeek)
-  );
+  ).sort((a, b) => {
+    const aWeekly = (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+    const bWeekly = (b.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+    if (bWeekly !== aWeekly) return bWeekly - aWeekly;
+    return (a.due_date ?? "").localeCompare(b.due_date ?? "");
+  });
 
   const takenTasksMapped = (takenAssignments ?? [])
     .map((a) => {
       const t = (a as { tasks: unknown }).tasks;
       if (!t || typeof t !== "object" || !("family_id" in t)) return null;
       if ((t as { family_id: string }).family_id !== familyId) return null;
-      const task = t as unknown as { id: string; title: string; score_value: number; deadline: string | null };
+      const task = t as unknown as { id: string; title: string; score_value: number; deadline: string | null; scheduled_days?: number[] | null };
       return {
         id: task.id,
         title: task.title,
         score_value: task.score_value,
         assignee_id: (a as { member_id: string }).member_id,
         deadline: task.deadline,
+        scheduled_days: task.scheduled_days,
       };
     })
-    .filter(Boolean) as { id: string; title: string; score_value: number; assignee_id: string; deadline: string | null }[];
+    .filter(Boolean) as { id: string; title: string; score_value: number; assignee_id: string; deadline: string | null; scheduled_days?: number[] | null }[];
 
   const takenTasks = takenTasksMapped.sort((a, b) => {
+    const aWeekly = (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+    const bWeekly = (b.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+    if (bWeekly !== aWeekly) return bWeekly - aWeekly;
     const da = a.deadline ?? "9999-12-31";
     const db = b.deadline ?? "9999-12-31";
     return da.localeCompare(db);

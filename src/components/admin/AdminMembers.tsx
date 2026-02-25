@@ -75,7 +75,7 @@ export function AdminMembers({ members }: AdminMembersProps) {
                 className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
               >
                 <option value="kid">Kid</option>
-                <option value="admin">Admin</option>
+                <option value="admin">Parent</option>
               </select>
             </div>
           </div>
@@ -114,7 +114,7 @@ export function AdminMembers({ members }: AdminMembersProps) {
                           defaultValue={m.role}
                         >
                           <option value="kid">Kid</option>
-                          <option value="admin">Admin</option>
+                          <option value="admin">Parent</option>
                         </select>
                       </div>
                     </div>
@@ -131,7 +131,7 @@ export function AdminMembers({ members }: AdminMembersProps) {
                     <MemberAvatar name={m.name} avatarUrl={m.avatar_url} size="sm" />
                     <span className="font-medium">{m.name}</span>
                     <Badge variant={m.role === "admin" ? "default" : "house"}>
-                      {m.role}
+                      {m.role === "admin" ? "Parent" : m.role}
                     </Badge>
                     <Button
                       variant="ghost"

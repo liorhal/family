@@ -25,7 +25,7 @@ export function Header({ memberName, memberRole, avatarUrl }: HeaderProps) {
   const nav = [
     { href: "/", label: "Dashboard", icon: Home },
     { href: "/today", label: "Today", icon: Calendar },
-    ...(memberRole === "admin" ? [{ href: "/admin", label: "Admin", icon: Settings }] : []),
+    ...(memberRole === "admin" ? [{ href: "/admin", label: "Parent", icon: Settings }] : []),
   ];
 
   return (

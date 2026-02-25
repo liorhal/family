@@ -56,7 +56,7 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Parent Panel</h1>
 
       <AdminSettings showResetButton={family?.show_reset_button ?? false} />
 

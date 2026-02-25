@@ -38,7 +38,7 @@ interface SportActivity {
   title: string;
   type: string;
   score_value: number;
-  member_id?: string;
+  member_id?: string | null;
 }
 
 interface SchoolTask {
@@ -83,6 +83,7 @@ export function TodayTasks({
   const [completing, setCompleting] = useState<string | null>(null);
   const [takingTaskId, setTakingTaskId] = useState<string | null>(null);
   const [assigneeForTask, setAssigneeForTask] = useState<Record<string, string>>({});
+  const [sportCompleterForActivity, setSportCompleterForActivity] = useState<Record<string, string>>({});
   const [celebrationMember, setCelebrationMember] = useState<Member | null>(null);
 
   const getMember = (id: string) => members.find((m) => m.id === id);
@@ -130,15 +131,25 @@ export function TodayTasks({
 
   async function handleCompleteSport(activityId: string) {
     const activity = sportActivities.find((a) => a.id === activityId);
-    const member = activity?.member_id ? getMember(activity.member_id) : null;
+    const targetMemberId = activity?.member_id ?? sportCompleterForActivity[activityId] ?? members[0]?.id;
+    if (!activity?.member_id && !targetMemberId) {
+      alert("Select who completes this activity");
+      return;
+    }
+    const member = targetMemberId ? getMember(targetMemberId) : null;
     setCompleting(activityId);
-    const res = await completeSportActivity(activityId);
+    const res = await completeSportActivity(activityId, activity?.member_id ? undefined : targetMemberId);
     setCompleting(null);
     if (res.error) alert(res.error);
     else {
       playSuccessSound();
       fireConfetti();
       if (member) setCelebrationMember(member);
+      setSportCompleterForActivity((p) => {
+        const next = { ...p };
+        delete next[activityId];
+        return next;
+      });
       router.refresh();
     }
   }
@@ -299,38 +310,54 @@ export function TodayTasks({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {sportActivities.map((a) => (
+            {sportActivities.map((a) => {
+              const needsCompleter = !a.member_id;
+              const m = a.member_id ? getMember(a.member_id) : null;
+              return (
               <motion.div
                 key={a.id}
                 layout
-                className="flex items-center justify-between rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50"
               >
                 <div>
                   <p className="font-medium">{a.title}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <Badge variant="sport">+{a.score_value} pts</Badge>
-                    {(() => {
-                      const m = a.member_id ? getMember(a.member_id) : null;
-                      return m ? (
-                        <span className="flex items-center gap-1.5 text-sm text-slate-500">
-                          <MemberAvatar name={m.name} avatarUrl={m.avatar_url} size="sm" />
-                          → {m.name}
-                        </span>
-                      ) : null;
-                    })()}
+                    {m ? (
+                      <span className="flex items-center gap-1.5 text-sm text-slate-500">
+                        <MemberAvatar name={m.name} avatarUrl={m.avatar_url} size="sm" />
+                        → {m.name}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
-                <Button
-                  variant="success"
-                  size="lg"
-                  onClick={() => handleCompleteSport(a.id)}
-                  disabled={completing === a.id}
-                >
-                  <Check className="mr-2 h-5 w-5" />
-                  {completing === a.id ? "..." : "Complete"}
-                </Button>
+                <div className="flex items-center gap-2">
+                  {needsCompleter && (
+                    <select
+                      value={sportCompleterForActivity[a.id] ?? members[0]?.id ?? ""}
+                      onChange={(e) =>
+                        setSportCompleterForActivity((p) => ({ ...p, [a.id]: e.target.value }))
+                      }
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    >
+                      {members.map((mem) => (
+                        <option key={mem.id} value={mem.id}>{mem.name}</option>
+                      ))}
+                    </select>
+                  )}
+                  <Button
+                    variant="success"
+                    size="lg"
+                    onClick={() => handleCompleteSport(a.id)}
+                    disabled={completing === a.id || (needsCompleter && members.length === 0)}
+                  >
+                    <Check className="mr-2 h-5 w-5" />
+                    {completing === a.id ? "..." : "Complete"}
+                  </Button>
+                </div>
               </motion.div>
-            ))}
+            );
+            })}
           </CardContent>
         </Card>
       )}

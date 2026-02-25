@@ -71,13 +71,13 @@ export function AdminSport({ activities, members }: AdminSportProps) {
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="member_id">Member</Label>
+              <Label htmlFor="member_id">Member (optional)</Label>
               <select
                 id="member_id"
                 name="member_id"
-                required
                 className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
               >
+                <option value="">No default — assign when completing</option>
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name}
@@ -142,13 +142,13 @@ export function AdminSport({ activities, members }: AdminSportProps) {
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <Label>Member</Label>
+                        <Label>Member (optional)</Label>
                         <select
                           name="member_id"
-                          required
                           className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
-                          defaultValue={a.member_id}
+                          defaultValue={a.member_id ?? ""}
                         >
+                          <option value="">No default</option>
                           {members.map((m) => (
                             <option key={m.id} value={m.id}>{m.name}</option>
                           ))}
@@ -197,7 +197,7 @@ export function AdminSport({ activities, members }: AdminSportProps) {
                       </Badge>
                     </div>
                     <span className="text-slate-500">
-                      {members.find((m) => m.id === a.member_id)?.name ?? "—"}
+                      {a.member_id ? members.find((m) => m.id === a.member_id)?.name ?? "—" : "No default"}
                     </span>
                     <Button
                       variant="ghost"
