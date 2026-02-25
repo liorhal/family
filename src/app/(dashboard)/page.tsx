@@ -29,11 +29,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivityLog } from "@/components/dashboard/ActivityLog";
+import { DashboardTodayActivities } from "@/components/dashboard/DashboardTodayActivities";
 import { Leaderboard } from "@/components/dashboard/Leaderboard";
 import { RealtimeLeaderboard } from "@/components/dashboard/RealtimeLeaderboard";
 import { WeeklyChart } from "@/components/dashboard/WeeklyChart";
-import { MemberAvatar } from "@/components/MemberAvatar";
-import { Badge } from "@/components/ui/badge";
 import { Flame, Trophy, Calendar } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -148,28 +147,92 @@ export default async function DashboardPage() {
     return row;
   });
 
-  const { data: tasks } = await supabase
-    .from("tasks")
-    .select("*, task_assignments(member_id)")
-    .eq("family_id", familyId)
-    .in("status", ["open", "taken"])
-    .order("deadline", { ascending: true, nullsFirst: false })
-    .limit(5);
+  // Today's activities (house, sport, school)
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const todayStr = format(today, "yyyy-MM-dd");
 
-  const { data: sportActivities } = await supabase
+  const { data: takenAssignments } = await supabase
+    .from("task_assignments")
+    .select("*, tasks(*)")
+    .is("completed_at", null);
+
+  const { data: openTasksRaw } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("family_id", familyId)
+    .eq("status", "open")
+    .or(`deadline.gte.${todayStr},deadline.is.null`);
+
+  const openTasks = (openTasksRaw ?? [])
+    .filter(
+      (t) =>
+        !t.scheduled_days ||
+        t.scheduled_days.length === 0 ||
+        t.scheduled_days.includes(dayOfWeek)
+    )
+    .sort((a, b) => {
+      const da = a.deadline ?? "9999-12-31";
+      const db = b.deadline ?? "9999-12-31";
+      return da.localeCompare(db);
+    });
+
+  const { data: sportActivitiesRaw } = await supabase
     .from("sport_activities")
     .select("*")
     .in("member_id", (members ?? []).map((m) => m.id))
-    .is("completed_at", null)
-    .limit(5);
+    .is("completed_at", null);
 
-  const { data: schoolTasks } = await supabase
+  const sportActivities = (sportActivitiesRaw ?? [])
+    .filter(
+      (a) =>
+        a.type === "extra" ||
+        ((a.scheduled_days?.length ?? 0) > 0 && a.scheduled_days!.includes(dayOfWeek))
+    )
+    .sort((a, b) => {
+      if (a.type === "extra" && b.type !== "extra") return -1;
+      if (a.type !== "extra" && b.type === "extra") return 1;
+      const dayA = (a.scheduled_days?.[0] ?? 7) as number;
+      const dayB = (b.scheduled_days?.[0] ?? 7) as number;
+      return dayA - dayB;
+    });
+
+  const { data: schoolTasksRaw } = await supabase
     .from("school_tasks")
     .select("*")
     .in("member_id", (members ?? []).map((m) => m.id))
     .is("completed_at", null)
-    .order("due_date", { ascending: true })
-    .limit(5);
+    .gte("due_date", todayStr)
+    .order("due_date", { ascending: true });
+
+  const schoolTasks = (schoolTasksRaw ?? []).filter(
+    (t) =>
+      !t.scheduled_days ||
+      t.scheduled_days.length === 0 ||
+      t.scheduled_days.includes(dayOfWeek)
+  );
+
+  const takenTasksMapped = (takenAssignments ?? [])
+    .map((a) => {
+      const t = (a as { tasks: unknown }).tasks;
+      if (!t || typeof t !== "object" || !("family_id" in t)) return null;
+      if ((t as { family_id: string }).family_id !== familyId) return null;
+      const task = t as unknown as { id: string; title: string; score_value: number; deadline: string | null };
+      return {
+        id: task.id,
+        title: task.title,
+        score_value: task.score_value,
+        assignee_id: (a as { member_id: string }).member_id,
+        deadline: task.deadline,
+      };
+    })
+    .filter(Boolean) as { id: string; title: string; score_value: number; assignee_id: string; deadline: string | null }[];
+
+  const takenTasks = takenTasksMapped.sort((a, b) => {
+    const da = a.deadline ?? "9999-12-31";
+    const db = b.deadline ?? "9999-12-31";
+    return da.localeCompare(db);
+  });
 
   // Activity log: last 7 days completed activities
   const sevenDaysAgo = subDays(new Date(), 7).toISOString();
@@ -319,110 +382,23 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>House Tasks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {tasks && tasks.length > 0 ? (
-              <ul className="space-y-2">
-                {tasks.map((t) => {
-                  const assigneeId = (t as { task_assignments?: { member_id: string }[] }).task_assignments?.[0]?.member_id ?? t.default_assignee_id;
-                  const assignee = assigneeId ? members?.find((m) => m.id === assigneeId) : null;
-                  return (
-                    <li
-                      key={t.id}
-                      className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-800/50"
-                    >
-                      <span>{t.title}</span>
-                      <div className="flex items-center gap-2">
-                        {assignee && (
-                          <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                            <MemberAvatar name={assignee.name} avatarUrl={assignee.avatar_url} size="sm" />
-                            {assignee.name}
-                          </span>
-                        )}
-                        <Badge variant="house">{t.status}</Badge>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="text-slate-500">No tasks yet. Add some in Admin!</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Sport Activities</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {sportActivities && sportActivities.length > 0 ? (
-              <ul className="space-y-2">
-                {sportActivities.map((a) => {
-                  const person = a.member_id ? members?.find((m) => m.id === a.member_id) : null;
-                  return (
-                    <li
-                      key={a.id}
-                      className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-800/50"
-                    >
-                      <span>{a.title}</span>
-                      <div className="flex items-center gap-2">
-                        {person && (
-                          <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                            <MemberAvatar name={person.name} avatarUrl={person.avatar_url} size="sm" />
-                            {person.name}
-                          </span>
-                        )}
-                        <Badge variant="sport">{a.type}</Badge>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="text-slate-500">No sport activities</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>School Deadlines</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {schoolTasks && schoolTasks.length > 0 ? (
-              <ul className="space-y-2">
-                {schoolTasks.map((t) => {
-                  const person = t.member_id ? members?.find((m) => m.id === t.member_id) : null;
-                  return (
-                    <li
-                      key={t.id}
-                      className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-800/50"
-                    >
-                      <span>{t.title}</span>
-                      <div className="flex items-center gap-2">
-                        {person && (
-                          <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                            <MemberAvatar name={person.name} avatarUrl={person.avatar_url} size="sm" />
-                            {person.name}
-                          </span>
-                        )}
-                        <Badge variant="school">{format(new Date(t.due_date), "MMM d")}</Badge>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="text-slate-500">No school tasks</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Today Activities</CardTitle>
+          <p className="text-sm text-slate-500">
+            House, sport, and school activities for today. Assign, take, or complete from here.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <DashboardTodayActivities
+            takenTasks={takenTasks}
+            openTasks={openTasks}
+            sportActivities={sportActivities}
+            schoolTasks={schoolTasks}
+            members={members ?? []}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
