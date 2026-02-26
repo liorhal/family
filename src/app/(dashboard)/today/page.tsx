@@ -38,14 +38,18 @@ export default async function TodayPage() {
     .eq("status", "open")
     .or(`deadline.gte.${todayStr},deadline.is.null`);
 
+  const isTaskRelevantToday = (t: { recurring_daily?: boolean; scheduled_days?: number[] | null }) =>
+    (t.recurring_daily === true) ||
+    !t.scheduled_days ||
+    t.scheduled_days.length === 0 ||
+    t.scheduled_days.includes(dayOfWeek);
+
   const openTasks = (openTasksRaw ?? [])
-    .filter(
-      (t) =>
-        !t.scheduled_days ||
-        t.scheduled_days.length === 0 ||
-        t.scheduled_days.includes(dayOfWeek)
-    )
+    .filter(isTaskRelevantToday)
     .sort((a, b) => {
+      const aWeekly = (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+      const bWeekly = (b.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+      if (bWeekly !== aWeekly) return bWeekly - aWeekly;
       const da = a.deadline ?? "9999-12-31";
       const db = b.deadline ?? "9999-12-31";
       return da.localeCompare(db);
@@ -88,23 +92,28 @@ export default async function TodayPage() {
       t.scheduled_days.includes(dayOfWeek)
   );
 
-  // Filter taken assignments to only tasks in our family
+  // Filter taken assignments to only tasks in our family, and only tasks relevant today
   const takenTasksMapped = (takenAssignments ?? [])
     .map((a) => {
       const t = (a as { tasks: unknown }).tasks;
       if (!t || typeof t !== "object" || !("family_id" in t)) return null;
       if ((t as { family_id: string }).family_id !== member.family_id) return null;
-      const task = t as unknown as { id: string; title: string; score_value: number; deadline: string | null };
+      const task = t as unknown as { id: string; title: string; score_value: number; deadline: string | null; scheduled_days?: number[] | null; recurring_daily?: boolean };
+      if (!isTaskRelevantToday(task)) return null;
       return {
         id: task.id,
         title: task.title,
         score_value: task.score_value,
         assignee_id: (a as { member_id: string }).member_id,
         deadline: task.deadline,
+        scheduled_days: task.scheduled_days,
       };
     })
-    .filter(Boolean) as { id: string; title: string; score_value: number; assignee_id: string; deadline: string | null }[];
+    .filter(Boolean) as { id: string; title: string; score_value: number; assignee_id: string; deadline: string | null; scheduled_days?: number[] | null }[];
   const takenTasksWithAssignee = takenTasksMapped.sort((a, b) => {
+    const aWeekly = (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+    const bWeekly = (b.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
+    if (bWeekly !== aWeekly) return bWeekly - aWeekly;
     const da = a.deadline ?? "9999-12-31";
     const db = b.deadline ?? "9999-12-31";
     return da.localeCompare(db);

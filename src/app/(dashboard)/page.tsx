@@ -164,13 +164,14 @@ export default async function DashboardPage() {
     .eq("status", "open")
     .or(`deadline.gte.${todayStr},deadline.is.null`);
 
+  const isTaskRelevantToday = (t: { recurring_daily?: boolean; scheduled_days?: number[] | null }) =>
+    (t.recurring_daily === true) ||
+    !t.scheduled_days ||
+    t.scheduled_days.length === 0 ||
+    t.scheduled_days.includes(dayOfWeek);
+
   const openTasks = (openTasksRaw ?? [])
-    .filter(
-      (t) =>
-        !t.scheduled_days ||
-        t.scheduled_days.length === 0 ||
-        t.scheduled_days.includes(dayOfWeek)
-    )
+    .filter(isTaskRelevantToday)
     .sort((a, b) => {
       const aWeekly = (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
       const bWeekly = (b.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
@@ -228,7 +229,8 @@ export default async function DashboardPage() {
       const t = (a as { tasks: unknown }).tasks;
       if (!t || typeof t !== "object" || !("family_id" in t)) return null;
       if ((t as { family_id: string }).family_id !== familyId) return null;
-      const task = t as unknown as { id: string; title: string; score_value: number; deadline: string | null; scheduled_days?: number[] | null };
+      const task = t as unknown as { id: string; title: string; score_value: number; deadline: string | null; scheduled_days?: number[] | null; recurring_daily?: boolean };
+      if (!isTaskRelevantToday(task)) return null;
       return {
         id: task.id,
         title: task.title,
