@@ -93,32 +93,32 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
     const iconBg = getIconColorClasses(ratio, p.earned);
     return (
       <div
-        className={`flex items-start gap-4 rounded-xl border p-4 transition-colors ${borderBg}`}
+        className={`flex items-start gap-3 rounded-lg border p-2.5 transition-colors ${borderBg}`}
       >
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${iconBg}`}>
-          <Icon className="h-6 w-6" />
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${iconBg}`}>
+          <Icon className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
           {opts?.memberName && (
-            <div className="mb-1 flex items-center gap-2">
+            <div className="mb-0.5 flex items-center gap-1.5">
               <MemberAvatar name={opts.memberName} avatarUrl={opts.memberAvatarUrl} size="sm" />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                 {opts.memberName}
               </span>
             </div>
           )}
-          <p className="font-semibold">{p.title}</p>
+          <p className="text-sm font-semibold">{p.title}</p>
           {p.taskTitle && (
-            <p className="text-xs text-slate-500">Master of &quot;{p.taskTitle}&quot;</p>
+            <p className="text-[10px] text-slate-500">Master of &quot;{p.taskTitle}&quot;</p>
           )}
-          <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">{p.description}</p>
-          <p className="mt-2 text-sm font-medium">
+          <p className="mt-0 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{p.description}</p>
+          <p className="mt-1 text-xs font-medium">
             <span className={ratio >= 1 ? "text-emerald-600" : ratio >= 0.5 ? "text-amber-600" : "text-slate-600"}>
               {p.current} / {p.threshold}
             </span>
             {p.earned && (
-              <span className="ml-2 inline-flex items-center gap-1 text-emerald-600">
-                <Check className="h-4 w-4" /> Earned!
+              <span className="ml-1.5 inline-flex items-center gap-0.5 text-emerald-600">
+                <Check className="h-3 w-3" /> Earned!
               </span>
             )}
           </p>
@@ -152,18 +152,20 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
     showMember: boolean
   ) => (
     <section>
-      <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">{icon} {title}</h2>
-      <div className="space-y-3">
+      <h2 className="mb-2 flex items-center gap-1.5 text-base font-semibold">{icon} {title}</h2>
+      <div className="space-y-2">
         {entries.length > 0 ? (
-          entries.map((e, i) => {
-            const fe = e as FamilyBadgeEntry;
-            const key = showMember ? `${fe.badgeId}-${fe.memberId}` : `${fe.badgeId}-${i}`;
-            return (
-              <div key={key}>
-                {renderBadge(e, showMember ? { memberName: fe.memberName, memberAvatarUrl: fe.memberAvatarUrl } : undefined)}
-              </div>
-            );
-          })
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {entries.map((e, i) => {
+              const fe = e as FamilyBadgeEntry;
+              const key = showMember ? `${fe.badgeId}-${fe.memberId}` : `${fe.badgeId}-${i}`;
+              return (
+                <div key={key}>
+                  {renderBadge(e, showMember ? { memberName: fe.memberName, memberAvatarUrl: fe.memberAvatarUrl } : undefined)}
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <p className="text-sm text-slate-500">No badge progress yet.</p>
         )}
@@ -239,14 +241,14 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
       ) : loading ? (
         <p className="text-center text-slate-500">Loading badge progress…</p>
       ) : view === "family" ? (
-        <div className="space-y-8">
+        <div className="space-y-6">
           <section>
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-              <Trophy className="h-5 w-5 text-emerald-500" />
+            <h2 className="mb-2 flex items-center gap-1.5 text-base font-semibold">
+              <Trophy className="h-4 w-4 text-emerald-500" />
               Completed badges
             </h2>
             {completedEntries.length > 0 ? (
-              <div className="space-y-3">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {completedEntries.map((e) => {
                   const fe = e as FamilyBadgeEntry;
                   return (
@@ -257,16 +259,16 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
                 })}
               </div>
             ) : (
-              <p className="text-sm text-slate-500">No badges earned yet. Keep going!</p>
+              <p className="text-xs text-slate-500">No badges earned yet. Keep going!</p>
             )}
           </section>
           <section>
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-              <Flame className="h-5 w-5 text-orange-500" />
+            <h2 className="mb-2 flex items-center gap-1.5 text-base font-semibold">
+              <Flame className="h-4 w-4 text-orange-500" />
               Top 10 in progress
             </h2>
             {inProgressEntries.length > 0 ? (
-              <div className="space-y-3">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {inProgressEntries.map((e) => {
                   const fe = e as FamilyBadgeEntry;
                   return (
@@ -277,14 +279,14 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
                 })}
               </div>
             ) : (
-              <p className="text-sm text-slate-500">
+              <p className="text-xs text-slate-500">
                 {completedEntries.length > 0 ? "All badges earned! Amazing work!" : "Start earning badges to see progress here."}
               </p>
             )}
           </section>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {renderSection(
             "General Streak",
             <Flame className="h-5 w-5 text-orange-500" />,

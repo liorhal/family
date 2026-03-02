@@ -17,6 +17,7 @@ import {
   completeSchoolTask,
 } from "@/app/actions";
 import { MemberAvatar } from "@/components/MemberAvatar";
+import { MemberAvatarPicker } from "@/components/MemberAvatarPicker";
 import { Check, Dumbbell, BookOpen, Home, UserPlus, RotateCcw } from "lucide-react";
 
 interface TakenTask {
@@ -124,8 +125,8 @@ export function DashboardTodayActivities({
 
   async function handleCompleteSport(activityId: string) {
     const activity = sportActivities.find((a) => a.id === activityId);
-    const targetMemberId = activity?.member_id ?? sportCompleterForActivity[activityId] ?? members[0]?.id;
-    if (!activity?.member_id && !targetMemberId) {
+    const targetMemberId = activity?.member_id ?? sportCompleterForActivity[activityId];
+    if (!targetMemberId) {
       alert("Select who completes this activity");
       return;
     }
@@ -251,18 +252,12 @@ export function DashboardTodayActivities({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <select
+            <MemberAvatarPicker
+              members={members}
               value={assigneeForTask[t.id] ?? ""}
-              onChange={(e) =>
-                setAssigneeForTask((p) => ({ ...p, [t.id]: e.target.value }))
-              }
-              className="h-8 rounded-md border border-slate-200 px-2 text-xs dark:border-slate-700 dark:bg-slate-800"
-            >
-              <option value="">Select who…</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>{m.name}</option>
-              ))}
-            </select>
+              onChange={(id) => setAssigneeForTask((p) => ({ ...p, [t.id]: id }))}
+              size="sm"
+            />
             <Button
               variant="outline"
               size="icon"
@@ -319,24 +314,19 @@ export function DashboardTodayActivities({
             </div>
             <div className="flex shrink-0 items-center gap-1">
               {needsCompleter && (
-                <select
-                  value={sportCompleterForActivity[a.id] ?? members[0]?.id ?? ""}
-                  onChange={(e) =>
-                    setSportCompleterForActivity((p) => ({ ...p, [a.id]: e.target.value }))
-                  }
-                  className="h-8 rounded-md border border-slate-200 px-2 text-xs dark:border-slate-700 dark:bg-slate-800"
-                >
-                  {members.map((mem) => (
-                    <option key={mem.id} value={mem.id}>{mem.name}</option>
-                  ))}
-                </select>
+                <MemberAvatarPicker
+                  members={members}
+                  value={sportCompleterForActivity[a.id] ?? ""}
+                  onChange={(id) => setSportCompleterForActivity((p) => ({ ...p, [a.id]: id }))}
+                  size="sm"
+                />
               )}
               <Button
                 variant="success"
                 size="icon"
                 className={iconBtn}
                 onClick={() => handleCompleteSport(a.id)}
-                disabled={completing === a.id || (needsCompleter && members.length === 0)}
+                disabled={completing === a.id || (needsCompleter && !sportCompleterForActivity[a.id])}
                 title="Complete"
               >
                 <Check className="h-4 w-4" />
