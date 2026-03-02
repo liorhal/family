@@ -251,13 +251,13 @@ export default async function DashboardPage() {
     return da.localeCompare(db);
   });
 
-  // Activity log: last 7 days completed activities
-  const sevenDaysAgo = subDays(new Date(), 7).toISOString();
+  // Activity log: fetch last 30 days so client can filter by selected range
+  const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
   const { data: activityScores } = await supabase
     .from("scores_log")
     .select("id, member_id, source_type, source_id, score_delta, description, created_at")
     .in("member_id", (members ?? []).map((m) => m.id))
-    .gte("created_at", sevenDaysAgo)
+    .gte("created_at", thirtyDaysAgo)
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -386,7 +386,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-blue-500" />
-              Last 7 Days · Activities
+              Last Activities
             </CardTitle>
           </CardHeader>
           <CardContent>

@@ -41,15 +41,23 @@ const sourceBadgeVariant: Record<ActivityEntry["source_type"], "house" | "sport"
   fine: "fine",
 };
 
+const DAY_OPTIONS = [1, 2, 3, 5, 7, 14, 30] as const;
+
 export function ActivityLog({ entries, members, showResetButton = false }: ActivityLogProps) {
   const router = useRouter();
+  const [days, setDays] = useState(1);
   const [filterMemberId, setFilterMemberId] = useState<string>("");
   const [resettingId, setResettingId] = useState<string | null>(null);
 
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  cutoff.setHours(0, 0, 0, 0);
+
+  const entriesInRange = entries.filter((e) => new Date(e.created_at) >= cutoff);
   const filteredEntries =
     filterMemberId === ""
-      ? entries
-      : entries.filter((e) => e.member_id === filterMemberId);
+      ? entriesInRange
+      : entriesInRange.filter((e) => e.member_id === filterMemberId);
 
   async function handleReset(entry: ActivityEntry) {
     if (entry.source_type === "streak_bonus") return;
@@ -66,13 +74,24 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
 
   if (entries.length === 0) {
     return (
-      <p className="text-sm text-slate-500">No activities in the last 7 days.</p>
+      <p className="text-sm text-slate-500">No activities yet.</p>
     );
   }
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={days}
+          onChange={(e) => setDays(Number(e.target.value))}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+        >
+          {DAY_OPTIONS.map((d) => (
+            <option key={d} value={d}>
+              Last {d} day{d !== 1 ? "s" : ""}
+            </option>
+          ))}
+        </select>
         <Filter className="h-4 w-4 text-slate-400" />
         <select
           value={filterMemberId}
@@ -134,7 +153,10 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
       </ul>
 
       {filteredEntries.length === 0 && (
-        <p className="text-sm text-slate-500">No activities for this member.</p>
+        <p className="text-sm text-slate-500">
+          No activities in the last {days} day{days !== 1 ? "s" : ""}
+          {filterMemberId ? " for this member" : ""}.
+        </p>
       )}
     </div>
   );
