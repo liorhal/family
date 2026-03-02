@@ -69,6 +69,7 @@ export async function createTask(formData: FormData) {
 
 /** Update a house task (admin only) */
 export async function updateTask(taskId: string, formData: FormData) {
+  if (!taskId) return { error: "Invalid task" };
   const { member, familyId } = await getCurrentMember();
   if (!member || !familyId || member.role !== "admin") {
     return { error: "Unauthorized" };
@@ -77,8 +78,8 @@ export async function updateTask(taskId: string, formData: FormData) {
   const supabase = await createClient();
   const title = formData.get("title") as string;
   const description = (formData.get("description") as string) || null;
-  const deadlineRaw = formData.get("deadline") as string;
-  let deadline = deadlineRaw || null;
+  const deadlineRaw = (formData.get("deadline") as string)?.trim() || "";
+  let deadline: string | null = deadlineRaw || null;
   const recurring_daily = formData.get("recurring_daily") === "on" || formData.get("recurring_daily") === "true";
   if (recurring_daily && !deadline) {
     deadline = new Date().toISOString().split("T")[0];
@@ -287,12 +288,17 @@ export async function completeSportActivity(activityId: string, completingMember
 
   const { data: activity } = await supabase
     .from("sport_activities")
-    .select("id, member_id, score_value, completed_at")
+    .select("id, member_id, score_value, completed_at, type, scheduled_days")
     .eq("id", activityId)
     .single();
 
-  if (!activity || activity.completed_at) {
-    return { error: "Activity not found or already completed" };
+  if (!activity) return { error: "Activity not found" };
+
+  // Extra activities with no weekly schedule can be completed multiple times per day
+  const isAlwaysAvailable =
+    activity.type === "extra" && (!activity.scheduled_days || activity.scheduled_days.length === 0);
+  if (!isAlwaysAvailable && activity.completed_at) {
+    return { error: "Activity already completed" };
   }
 
   let targetMemberId: string;
@@ -319,10 +325,13 @@ export async function completeSportActivity(activityId: string, completingMember
 
   const now = new Date().toISOString();
 
-  await supabase
-    .from("sport_activities")
-    .update({ completed_at: now })
-    .eq("id", activityId);
+  // Only set completed_at for scheduled activities; always-available extras stay open for repeat completions
+  if (!isAlwaysAvailable) {
+    await supabase
+      .from("sport_activities")
+      .update({ completed_at: now })
+      .eq("id", activityId);
+  }
 
   await supabase.from("scores_log").insert({
     member_id: targetMemberId,

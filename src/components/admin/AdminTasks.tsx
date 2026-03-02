@@ -67,7 +67,7 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
       createButtonLabel="Create new task"
       onCreateClick={() => setShowCreateForm(true)}
     >
-      {showCreateForm && (
+      {showCreateForm && !editingId && (
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -144,9 +144,11 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
               <li key={t.id} className="space-y-2">
                 {editingId === t.id ? (
                   <form
+                    key={t.id}
                     onSubmit={(e) => {
                       e.preventDefault();
-                      handleEdit(t.id, new FormData(e.currentTarget));
+                      const form = e.currentTarget;
+                      handleEdit(t.id, new FormData(form));
                     }}
                     className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
                   >
