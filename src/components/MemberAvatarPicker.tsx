@@ -1,7 +1,14 @@
 "use client";
 
 import { MemberAvatar } from "@/components/MemberAvatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { UserPlus } from "lucide-react";
 
 interface Member {
   id: string;
@@ -13,8 +20,6 @@ interface MemberAvatarPickerProps {
   members: Member[];
   value: string;
   onChange: (memberId: string) => void;
-  /** Show placeholder for "no selection" - required for forms that need explicit selection */
-  requireSelection?: boolean;
   size?: "sm" | "md";
   className?: string;
 }
@@ -23,30 +28,48 @@ export function MemberAvatarPicker({
   members,
   value,
   onChange,
-  requireSelection = false,
   size = "sm",
   className,
 }: MemberAvatarPickerProps) {
-  const btnSize = size === "sm" ? "h-8 w-8" : "h-10 w-10";
   const avatarSize = size === "sm" ? "sm" : "md";
+  const triggerSize = size === "sm" ? "h-8 w-8" : "h-10 w-10";
+  const selectedMember = members.find((m) => m.id === value);
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-1", className)} role="group" aria-label="Select member">
-      {members.map((m) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <button
-          key={m.id}
           type="button"
-          onClick={() => onChange(m.id)}
-          title={m.name}
+          title={selectedMember ? selectedMember.name : "Select member"}
           className={cn(
-            "flex shrink-0 items-center justify-center rounded-full transition-all ring-2 ring-transparent hover:ring-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500",
-            value === m.id ? "ring-blue-500 ring-offset-2 dark:ring-offset-slate-900" : "",
-            btnSize
+            "flex shrink-0 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-slate-50 transition-colors hover:border-slate-400 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-slate-500",
+            selectedMember && "border-solid border-blue-400 bg-white dark:border-blue-500 dark:bg-slate-900",
+            triggerSize,
+            className
           )}
         >
-          <MemberAvatar name={m.name} avatarUrl={m.avatar_url} size={avatarSize} />
+          {selectedMember ? (
+            <MemberAvatar name={selectedMember.name} avatarUrl={selectedMember.avatar_url} size={avatarSize} />
+          ) : (
+            <UserPlus className={cn(size === "sm" ? "h-4 w-4" : "h-5 w-5", "text-slate-400")} />
+          )}
         </button>
-      ))}
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[10rem] p-1">
+        {members.map((m) => (
+          <DropdownMenuItem
+            key={m.id}
+            onSelect={() => onChange(m.id)}
+            className={cn(
+              "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 focus:bg-slate-100 dark:focus:bg-slate-800",
+              value === m.id && "bg-slate-100 dark:bg-slate-800"
+            )}
+          >
+            <MemberAvatar name={m.name} avatarUrl={m.avatar_url} size={avatarSize} />
+            <span className="truncate">{m.name}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
