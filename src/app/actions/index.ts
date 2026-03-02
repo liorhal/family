@@ -666,6 +666,51 @@ export async function getBadgeProgress(memberId: string): Promise<{ error?: stri
   return { data: result };
 }
 
+export interface FamilyBadgeEntry extends BadgeProgress {
+  memberId: string;
+  memberName: string;
+  memberAvatarUrl: string | null;
+}
+
+/** Get top badge progress across entire family (for default badges view) */
+export async function getFamilyBadgeProgress(): Promise<{ error?: string; data?: FamilyBadgeEntry[] }> {
+  const { member, familyId } = await getCurrentMember();
+  if (!member || !familyId) return { error: "Unauthorized" };
+
+  const supabase = await createClient();
+  const { data: members } = await supabase
+    .from("members")
+    .select("id, name, avatar_url")
+    .eq("family_id", familyId);
+  if (!members?.length) return { data: [] };
+
+  const entries: FamilyBadgeEntry[] = [];
+  for (const m of members) {
+    const res = await getBadgeProgress(m.id);
+    if (res.data) {
+      for (const p of res.data) {
+        entries.push({
+          ...p,
+          memberId: m.id,
+          memberName: m.name,
+          memberAvatarUrl: m.avatar_url ?? null,
+        });
+      }
+    }
+  }
+
+  // Sort: earned first, then by completion ratio (highest first), then by threshold (higher = more impressive)
+  entries.sort((a, b) => {
+    if (a.earned !== b.earned) return a.earned ? -1 : 1;
+    const ratioA = a.threshold > 0 ? a.current / a.threshold : 0;
+    const ratioB = b.threshold > 0 ? b.current / b.threshold : 0;
+    if (Math.abs(ratioB - ratioA) > 0.001) return ratioB - ratioA;
+    return b.threshold - a.threshold;
+  });
+
+  return { data: entries };
+}
+
 /** Create member (admin) */
 export async function createMember(formData: FormData) {
   const { member, familyId } = await getCurrentMember();
