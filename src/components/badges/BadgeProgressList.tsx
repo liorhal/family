@@ -132,6 +132,15 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
       ? familyEntries
       : memberProgress.map((p) => ({ ...p, memberId: selectedMemberId!, memberName: selectedMember?.name ?? "", memberAvatarUrl: selectedMember?.avatar_url ?? null }));
 
+  // Family view: split into completed + top 10 in progress
+  const completedEntries = view === "family" ? familyEntries.filter((e) => e.earned) : [];
+  const inProgressEntries =
+    view === "family"
+      ? familyEntries
+          .filter((e) => !e.earned)
+          .slice(0, 10)
+      : [];
+
   const generalEntries = displayEntries.filter((e) => e.type === "general_streak");
   const sportsEntries = displayEntries.filter((e) => e.type === "sports_streak");
   const masterEntries = displayEntries.filter((e) => e.type === "master_of_task");
@@ -229,25 +238,70 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
         <p className="text-center text-slate-500">No family members found.</p>
       ) : loading ? (
         <p className="text-center text-slate-500">Loading badge progress…</p>
+      ) : view === "family" ? (
+        <div className="space-y-8">
+          <section>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+              <Trophy className="h-5 w-5 text-emerald-500" />
+              Completed badges
+            </h2>
+            {completedEntries.length > 0 ? (
+              <div className="space-y-3">
+                {completedEntries.map((e) => {
+                  const fe = e as FamilyBadgeEntry;
+                  return (
+                    <div key={`${fe.badgeId}-${fe.memberId}`}>
+                      {renderBadge(e, { memberName: fe.memberName, memberAvatarUrl: fe.memberAvatarUrl })}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">No badges earned yet. Keep going!</p>
+            )}
+          </section>
+          <section>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+              <Flame className="h-5 w-5 text-orange-500" />
+              Top 10 in progress
+            </h2>
+            {inProgressEntries.length > 0 ? (
+              <div className="space-y-3">
+                {inProgressEntries.map((e) => {
+                  const fe = e as FamilyBadgeEntry;
+                  return (
+                    <div key={`${fe.badgeId}-${fe.memberId}`}>
+                      {renderBadge(e, { memberName: fe.memberName, memberAvatarUrl: fe.memberAvatarUrl })}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">
+                {completedEntries.length > 0 ? "All badges earned! Amazing work!" : "Start earning badges to see progress here."}
+              </p>
+            )}
+          </section>
+        </div>
       ) : (
         <div className="space-y-8">
           {renderSection(
             "General Streak",
             <Flame className="h-5 w-5 text-orange-500" />,
             generalEntries,
-            view === "family"
+            false
           )}
           {renderSection(
             "Sports Streak",
             <Dumbbell className="h-5 w-5 text-purple-500" />,
             sportsEntries,
-            view === "family"
+            false
           )}
           {renderSection(
             "Master of House Tasks",
             <Star className="h-5 w-5 text-amber-500" />,
             masterEntries,
-            view === "family"
+            false
           )}
         </div>
       )}

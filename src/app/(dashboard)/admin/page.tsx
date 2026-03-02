@@ -36,10 +36,11 @@ export default async function AdminPage() {
     .eq("family_id", member.family_id)
     .order("created_at", { ascending: false });
 
+  const memberIds = (members ?? []).map((m) => m.id);
   const { data: sportActivities } = await supabase
     .from("sport_activities")
     .select("*")
-    .in("member_id", (members ?? []).map((m) => m.id))
+    .or(memberIds.length > 0 ? `member_id.in.(${memberIds.join(",")}),member_id.is.null` : "member_id.is.null")
     .order("created_at", { ascending: false });
 
   const { data: schoolTasks } = await supabase
