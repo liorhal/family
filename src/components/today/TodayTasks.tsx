@@ -89,7 +89,7 @@ export function TodayTasks({
   const getMember = (id: string) => members.find((m) => m.id === id);
 
   async function handleTakeTask(taskId: string) {
-    const assigneeId = assigneeForTask[taskId] || members[0]?.id;
+    const assigneeId = assigneeForTask[taskId];
     if (!assigneeId) {
       alert("Select who will do this task");
       return;
@@ -274,12 +274,13 @@ export function TodayTasks({
                 </div>
                 <div className="flex items-center gap-2">
                   <select
-                    value={assigneeForTask[t.id] ?? members[0]?.id ?? ""}
+                    value={assigneeForTask[t.id] ?? ""}
                     onChange={(e) =>
                       setAssigneeForTask((p) => ({ ...p, [t.id]: e.target.value }))
                     }
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
                   >
+                    <option value="">Select who…</option>
                     {members.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.name}
@@ -289,7 +290,7 @@ export function TodayTasks({
                   <Button
                     variant="outline"
                     onClick={() => handleTakeTask(t.id)}
-                    disabled={takingTaskId === t.id || members.length === 0}
+                    disabled={takingTaskId === t.id || !assigneeForTask[t.id]}
                   >
                     <UserPlus className="mr-2 h-4 w-4" />
                     {takingTaskId === t.id ? "..." : "Take"}

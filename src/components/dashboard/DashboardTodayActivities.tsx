@@ -85,7 +85,7 @@ export function DashboardTodayActivities({
   const getMember = (id: string) => members.find((m) => m.id === id);
 
   async function handleTakeTask(taskId: string) {
-    const assigneeId = assigneeForTask[taskId] || members[0]?.id;
+    const assigneeId = assigneeForTask[taskId];
     if (!assigneeId) return;
     setTakingTaskId(taskId);
     const res = await takeTask(taskId, assigneeId);
@@ -252,12 +252,13 @@ export function DashboardTodayActivities({
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <select
-              value={assigneeForTask[t.id] ?? members[0]?.id ?? ""}
+              value={assigneeForTask[t.id] ?? ""}
               onChange={(e) =>
                 setAssigneeForTask((p) => ({ ...p, [t.id]: e.target.value }))
               }
               className="h-8 rounded-md border border-slate-200 px-2 text-xs dark:border-slate-700 dark:bg-slate-800"
             >
+              <option value="">Select who…</option>
               {members.map((m) => (
                 <option key={m.id} value={m.id}>{m.name}</option>
               ))}
@@ -267,7 +268,7 @@ export function DashboardTodayActivities({
               size="icon"
               className={iconBtn}
               onClick={() => handleTakeTask(t.id)}
-              disabled={takingTaskId === t.id || members.length === 0}
+              disabled={takingTaskId === t.id || !assigneeForTask[t.id]}
               title="Take task"
             >
               <UserPlus className="h-4 w-4" />

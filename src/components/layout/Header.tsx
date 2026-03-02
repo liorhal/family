@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "@/components/MemberAvatar";
-import { Home, Calendar, Settings, LogOut } from "lucide-react";
+import { Home, Calendar, Settings, LogOut, Award } from "lucide-react";
 
 interface HeaderProps {
   memberName?: string;
@@ -25,6 +25,7 @@ export function Header({ memberName, memberRole, avatarUrl }: HeaderProps) {
   const nav = [
     { href: "/", label: "Dashboard", icon: Home },
     { href: "/today", label: "Today", icon: Calendar },
+    { href: "/badges", label: "Badges", icon: Award },
     ...(memberRole === "admin" ? [{ href: "/admin", label: "Parent", icon: Settings }] : []),
   ];
 

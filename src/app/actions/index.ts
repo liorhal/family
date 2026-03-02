@@ -533,6 +533,139 @@ export async function calculateMonthlyScores(memberId: string) {
   return monthly;
 }
 
+export interface BadgeProgress {
+  badgeId: string;
+  type: "general_streak" | "sports_streak" | "master_of_task";
+  title: string;
+  description: string;
+  current: number;
+  threshold: number;
+  earned: boolean;
+  taskTitle?: string;
+}
+
+/** Get badge progress for a family member */
+export async function getBadgeProgress(memberId: string): Promise<{ error?: string; data?: BadgeProgress[] }> {
+  const { member, familyId } = await getCurrentMember();
+  if (!member || !familyId) return { error: "Unauthorized" };
+
+  const supabase = await createClient();
+
+  // Verify member is in user's family
+  const { data: memberData } = await supabase
+    .from("members")
+    .select("family_id")
+    .eq("id", memberId)
+    .single();
+  if (!memberData || memberData.family_id !== familyId) return { error: "Unauthorized" };
+
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+  // 1. General streak from streaks table (use longest_streak)
+  const { data: streak } = await supabase
+    .from("streaks")
+    .select("longest_streak")
+    .eq("member_id", memberId)
+    .single();
+  const generalStreak = streak?.longest_streak ?? 0;
+
+  // 2. Sports streak: compute from scores_log (sport entries by date, find longest consecutive)
+  const { data: sportScores } = await supabase
+    .from("scores_log")
+    .select("created_at")
+    .eq("member_id", memberId)
+    .eq("source_type", "sport")
+    .gte("created_at", oneYearAgo.toISOString());
+  const sportDates = new Set(
+    (sportScores ?? []).map((s) => new Date(s.created_at).toISOString().split("T")[0])
+  );
+  const sportDatesSorted = Array.from(sportDates).sort();
+  let sportsStreak = sportDatesSorted.length > 0 ? 1 : 0;
+  if (sportDatesSorted.length > 1) {
+    let run = 1;
+    for (let i = 1; i < sportDatesSorted.length; i++) {
+      const prev = new Date(sportDatesSorted[i - 1]).getTime();
+      const curr = new Date(sportDatesSorted[i]).getTime();
+      const diffDays = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
+      if (diffDays === 1) run++;
+      else {
+        sportsStreak = Math.max(sportsStreak, run);
+        run = 1;
+      }
+    }
+    sportsStreak = Math.max(sportsStreak, run);
+  }
+
+  // 3. Master of task: count house completions per task
+  const { data: houseScores } = await supabase
+    .from("scores_log")
+    .select("source_id")
+    .eq("member_id", memberId)
+    .eq("source_type", "house")
+    .not("source_id", "is", null);
+  const taskCounts: Record<string, number> = {};
+  for (const s of houseScores ?? []) {
+    const tid = s.source_id as string;
+    taskCounts[tid] = (taskCounts[tid] ?? 0) + 1;
+  }
+
+  // Fetch all family tasks for master badges
+  const { data: familyTasks } = await supabase
+    .from("tasks")
+    .select("id, title")
+    .eq("family_id", familyId);
+
+  const { GENERAL_STREAK_BADGES, SPORTS_STREAK_BADGES, getMasterOfTaskBadge, MASTER_THRESHOLDS } = await import(
+    "@/lib/badges"
+  );
+
+  const result: BadgeProgress[] = [];
+
+  for (const b of GENERAL_STREAK_BADGES) {
+    result.push({
+      badgeId: b.id,
+      type: "general_streak",
+      title: b.title,
+      description: b.description,
+      current: generalStreak,
+      threshold: b.threshold,
+      earned: generalStreak >= b.threshold,
+    });
+  }
+
+  for (const b of SPORTS_STREAK_BADGES) {
+    result.push({
+      badgeId: b.id,
+      type: "sports_streak",
+      title: b.title,
+      description: b.description,
+      current: sportsStreak,
+      threshold: b.threshold,
+      earned: sportsStreak >= b.threshold,
+    });
+  }
+
+  for (const task of familyTasks ?? []) {
+    const count = taskCounts[task.id] ?? 0;
+    for (const th of MASTER_THRESHOLDS) {
+      const badge = getMasterOfTaskBadge(task.title, th, task.id);
+      result.push({
+        badgeId: badge.id,
+        type: "master_of_task",
+        title: badge.title,
+        description: badge.description,
+        current: count,
+        threshold: th,
+        earned: count >= th,
+        taskTitle: task.title,
+      });
+    }
+  }
+
+  return { data: result };
+}
+
 /** Create member (admin) */
 export async function createMember(formData: FormData) {
   const { member, familyId } = await getCurrentMember();

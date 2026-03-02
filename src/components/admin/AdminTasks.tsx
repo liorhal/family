@@ -115,6 +115,7 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
               <select
                 id="default_assignee_id"
                 name="default_assignee_id"
+                defaultValue=""
                 className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
               >
                 <option value="">Anyone</option>
