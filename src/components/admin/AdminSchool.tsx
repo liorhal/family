@@ -71,13 +71,13 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="member_id">Member (optional for research)</Label>
+              <Label htmlFor="member_id">Default member</Label>
               <select
                 id="member_id"
                 name="member_id"
                 className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
               >
-                <option value="">Research – no assignee</option>
+                <option value="">No default</option>
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name}
@@ -109,8 +109,8 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="due_date">Due date</Label>
-              <Input id="due_date" name="due_date" type="date" required />
+              <Label htmlFor="due_date">Due date (optional)</Label>
+              <Input id="due_date" name="due_date" type="date" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="score_value">Score</Label>
@@ -186,8 +186,8 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                         </select>
                       </div>
                       <div className="space-y-1">
-                        <Label>Due date</Label>
-                        <Input name="due_date" type="date" defaultValue={t.due_date} required />
+                        <Label>Due date (optional)</Label>
+                        <Input name="due_date" type="date" defaultValue={t.due_date ?? ""} />
                       </div>
                       <div className="space-y-1">
                         <Label>Score</Label>
@@ -215,7 +215,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                       )}
                     </div>
                     <span className="text-slate-500">
-                      {t.member_id ? members.find((m) => m.id === t.member_id)?.name ?? "—" : "Research"} · {t.due_date}
+                      {t.member_id ? members.find((m) => m.id === t.member_id)?.name ?? "—" : "No default"} · {t.due_date ?? "—"}
                     </span>
                     <Button
                       variant="ghost"

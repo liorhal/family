@@ -46,7 +46,7 @@ interface SchoolTask {
   id: string;
   title: string;
   type: string;
-  due_date: string;
+  due_date: string | null;
   score_value: number;
   member_id?: string;
 }
@@ -384,7 +384,7 @@ export function TodayTasks({
                     <p className="font-medium">{t.title}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       <Badge variant="school">+{t.score_value} pts</Badge>
-                      <Badge variant="default">{t.due_date}</Badge>
+                      {t.due_date && <Badge variant="default">{t.due_date}</Badge>}
                       {m ? (
                         <span className="flex items-center gap-1.5 text-sm text-slate-500">
                           <MemberAvatar name={m.name} avatarUrl={m.avatar_url} size="sm" />

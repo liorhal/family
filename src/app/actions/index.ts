@@ -960,7 +960,8 @@ export async function createSchoolTask(formData: FormData) {
   const targetMemberId = memberIdRaw && memberIdRaw.trim() !== "" ? memberIdRaw : null;
   const title = formData.get("title") as string;
   const type = (formData.get("type") as "homework" | "exam" | "project" | "research") || "homework";
-  const due_date = formData.get("due_date") as string;
+  const dueDateRaw = formData.get("due_date") as string;
+  const due_date = dueDateRaw && dueDateRaw.trim() !== "" ? dueDateRaw : null;
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
   const scheduled_days: number[] | null = Array.isArray(scheduledDaysRaw) && scheduledDaysRaw.length > 0
@@ -1003,7 +1004,8 @@ export async function updateSchoolTask(taskId: string, formData: FormData) {
   const targetMemberId = memberIdRaw && memberIdRaw.trim() !== "" ? memberIdRaw : null;
   const title = formData.get("title") as string;
   const type = (formData.get("type") as "homework" | "exam" | "project" | "research") || "homework";
-  const due_date = formData.get("due_date") as string;
+  const dueDateRaw = formData.get("due_date") as string;
+  const due_date = dueDateRaw && dueDateRaw.trim() !== "" ? dueDateRaw : null;
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
   const scheduled_days: number[] | null = Array.isArray(scheduledDaysRaw) && scheduledDaysRaw.length > 0

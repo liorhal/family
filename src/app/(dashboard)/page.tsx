@@ -206,7 +206,7 @@ export default async function DashboardPage() {
     .from("school_tasks")
     .select("*")
     .is("completed_at", null)
-    .gte("due_date", todayStr)
+    .or(`due_date.gte.${todayStr},due_date.is.null`)
     .order("due_date", { ascending: true });
 
   const schoolTasks = (schoolTasksRaw ?? []).filter(

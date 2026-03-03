@@ -61,7 +61,7 @@ export interface SchoolTask {
   family_id?: string | null;
   title: string;
   type: SchoolTaskType;
-  due_date: string;
+  due_date: string | null;
   scheduled_days: number[] | null;
   score_value: number;
   completed_at: string | null;
