@@ -24,25 +24,26 @@ interface BadgeProgressListProps {
 /** Color grade by completion ratio: 0=slate, 0.25=yellow, 0.5=amber, 0.75=orange, 1=emerald */
 function getBadgeColorClasses(ratio: number, earned: boolean): string {
   if (earned || ratio >= 1) {
-    return "border-emerald-300 bg-emerald-50/70 dark:border-emerald-700 dark:bg-emerald-900/20";
+    return "border-emerald-400 bg-emerald-100 dark:border-emerald-600 dark:bg-emerald-900/50";
   }
   if (ratio >= 0.75) {
-    return "border-orange-200 bg-orange-50/60 dark:border-orange-700 dark:bg-orange-900/20";
+    return "border-orange-300 bg-orange-100 dark:border-orange-600 dark:bg-orange-900/50";
   }
   if (ratio >= 0.5) {
-    return "border-amber-200 bg-amber-50/60 dark:border-amber-700 dark:bg-amber-900/20";
+    return "border-amber-300 bg-amber-100 dark:border-amber-600 dark:bg-amber-900/50";
   }
   if (ratio >= 0.25) {
-    return "border-yellow-200 bg-yellow-50/50 dark:border-yellow-700 dark:bg-yellow-900/20";
+    return "border-yellow-300 bg-yellow-100 dark:border-yellow-600 dark:bg-yellow-900/50";
   }
-  return "border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/30";
+  return "border-slate-300 bg-slate-100 dark:border-slate-600 dark:bg-slate-800/50";
 }
 
 function getIconColorClasses(ratio: number, earned: boolean): string {
-  if (earned || ratio >= 1) return "bg-emerald-200 text-emerald-700 dark:bg-emerald-800/50 dark:text-emerald-400";
-  if (ratio >= 0.5) return "bg-amber-200 text-amber-700 dark:bg-amber-800/50 dark:text-amber-400";
-  if (ratio >= 0.25) return "bg-yellow-200 text-yellow-700 dark:bg-yellow-800/50 dark:text-yellow-400";
-  return "bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400";
+  if (earned || ratio >= 1) return "bg-emerald-300 text-emerald-800 dark:bg-emerald-700 dark:text-emerald-300";
+  if (ratio >= 0.75) return "bg-orange-300 text-orange-800 dark:bg-orange-700 dark:text-orange-300";
+  if (ratio >= 0.5) return "bg-amber-300 text-amber-800 dark:bg-amber-700 dark:text-amber-300";
+  if (ratio >= 0.25) return "bg-yellow-300 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-300";
+  return "bg-slate-300 text-slate-600 dark:bg-slate-600 dark:text-slate-300";
 }
 
 export function BadgeProgressList({ members }: BadgeProgressListProps) {
@@ -93,7 +94,7 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
     const iconBg = getIconColorClasses(ratio, p.earned);
     return (
       <div
-        className={`flex items-start gap-3 rounded-lg border p-2.5 transition-colors ${borderBg}`}
+        className={`flex h-full min-h-[7.5rem] items-start gap-3 rounded-lg border p-2.5 transition-colors ${borderBg}`}
       >
         <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${iconBg}`}>
           <Icon className="h-4 w-4" />
@@ -160,7 +161,7 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
               const fe = e as FamilyBadgeEntry;
               const key = showMember ? `${fe.badgeId}-${fe.memberId}` : `${fe.badgeId}-${i}`;
               return (
-                <div key={key}>
+                <div key={key} className="flex min-h-[7.5rem]">
                   {renderBadge(e, showMember ? { memberName: fe.memberName, memberAvatarUrl: fe.memberAvatarUrl } : undefined)}
                 </div>
               );
@@ -252,7 +253,7 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
                 {completedEntries.map((e) => {
                   const fe = e as FamilyBadgeEntry;
                   return (
-                    <div key={`${fe.badgeId}-${fe.memberId}`}>
+                    <div key={`${fe.badgeId}-${fe.memberId}`} className="flex min-h-[7.5rem]">
                       {renderBadge(e, { memberName: fe.memberName, memberAvatarUrl: fe.memberAvatarUrl })}
                     </div>
                   );
@@ -272,7 +273,7 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
                 {inProgressEntries.map((e) => {
                   const fe = e as FamilyBadgeEntry;
                   return (
-                    <div key={`${fe.badgeId}-${fe.memberId}`}>
+                    <div key={`${fe.badgeId}-${fe.memberId}`} className="flex min-h-[7.5rem]">
                       {renderBadge(e, { memberName: fe.memberName, memberAvatarUrl: fe.memberAvatarUrl })}
                     </div>
                   );

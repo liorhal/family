@@ -34,9 +34,7 @@ import { Leaderboard } from "@/components/dashboard/Leaderboard";
 import { RealtimeLeaderboard } from "@/components/dashboard/RealtimeLeaderboard";
 import { WeeklyChart } from "@/components/dashboard/WeeklyChart";
 import { Flame, Trophy, Calendar } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { FeelingLuckyButton } from "@/components/dashboard/FeelingLuckyButton";
 
 export default async function DashboardPage() {
   // #region agent log
@@ -320,12 +318,12 @@ export default async function DashboardPage() {
         <h1 className="text-3xl font-bold tracking-tight">
           {family?.name ? `${family.name} Family Dashboard` : "Family Dashboard"}
         </h1>
-        <Button asChild size="lg">
-          <Link href="/today">
-            <Plus className="mr-2 h-5 w-5" />
-            Quick Add
-          </Link>
-        </Button>
+        <FeelingLuckyButton
+          activities={[
+            ...openTasks.map((t) => ({ type: "house" as const, id: t.id, title: t.title, score_value: t.score_value })),
+            ...sportActivities.filter((a) => !a.member_id).map((a) => ({ type: "sport" as const, id: a.id, title: a.title, score_value: a.score_value })),
+          ]}
+        />
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
