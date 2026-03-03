@@ -15,7 +15,8 @@ import { cn } from "@/lib/utils";
 
 export type LuckyActivity =
   | { type: "house"; id: string; title: string; score_value: number }
-  | { type: "sport"; id: string; title: string; score_value: number };
+  | { type: "sport"; id: string; title: string; score_value: number }
+  | { type: "school"; id: string; title: string; score_value: number };
 
 interface FeelingLuckyButtonProps {
   activities: LuckyActivity[];
