@@ -76,11 +76,10 @@ export default async function TodayPage() {
       return dayA - dayB;
     });
 
-  // All family school tasks (any member)
+  // All family school tasks (any member) + research tasks (no member) - RLS filters by family
   const { data: schoolTasksRaw } = await supabase
     .from("school_tasks")
     .select("*")
-    .in("member_id", (members ?? []).map((m) => m.id))
     .is("completed_at", null)
     .gte("due_date", todayStr)
     .order("due_date", { ascending: true });

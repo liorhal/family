@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Home, Dumbbell } from "lucide-react";
+import { Home, Dumbbell, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type LuckyActivity =
@@ -21,28 +21,7 @@ interface FeelingLuckyButtonProps {
   activities: LuckyActivity[];
 }
 
-function DiceIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <rect width="8" height="8" x="2" y="2" rx="1" />
-      <path d="M15 2h6v6" />
-      <path d="M15 9h6v6" />
-      <path d="M2 15h6v6" />
-      <path d="M9 15h6v6" />
-    </svg>
-  );
-}
+const DICE_EMOJI = "🎲";
 
 export function FeelingLuckyButton({ activities }: FeelingLuckyButtonProps) {
   const [open, setOpen] = useState(false);
@@ -77,7 +56,7 @@ export function FeelingLuckyButton({ activities }: FeelingLuckyButtonProps) {
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSuggestion(null); }}>
       <DialogTrigger asChild>
         <Button size="lg" disabled={!hasActivities} title={hasActivities ? "Get a random activity suggestion" : "No unassigned activities today"}>
-          <DiceIcon className="mr-2 h-5 w-5" />
+          <span className="mr-2 text-xl">{DICE_EMOJI}</span>
           I&apos;m feeling lucky
         </Button>
       </DialogTrigger>
@@ -102,20 +81,21 @@ export function FeelingLuckyButton({ activities }: FeelingLuckyButtonProps) {
               )}
               title="Roll the dice"
             >
-              <DiceIcon className="h-10 w-10 text-slate-600" />
+              <span className="text-5xl">{DICE_EMOJI}</span>
             </button>
           )}
           {suggestion && (
             <div className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Suggested activity</p>
               <div className="mt-2 flex items-center gap-2">
-                {suggestion.type === "house" ? (
-                  <Home className="h-5 w-5 shrink-0 text-green-600" />
-                ) : (
-                  <Dumbbell className="h-5 w-5 shrink-0 text-purple-600" />
-                )}
+                {suggestion.type === "house" && <Home className="h-5 w-5 shrink-0 text-green-600" />}
+                {suggestion.type === "sport" && <Dumbbell className="h-5 w-5 shrink-0 text-purple-600" />}
+                {suggestion.type === "school" && <BookOpen className="h-5 w-5 shrink-0 text-blue-600" />}
                 <span className="font-medium">{suggestion.title}</span>
-                <Badge variant={suggestion.type === "house" ? "house" : "sport"} className="ml-auto shrink-0">
+                <Badge
+                  variant={suggestion.type === "house" ? "house" : suggestion.type === "sport" ? "sport" : "school"}
+                  className="ml-auto shrink-0"
+                >
                   +{suggestion.score_value}
                 </Badge>
               </div>

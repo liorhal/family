@@ -46,7 +46,6 @@ export default async function AdminPage() {
   const { data: schoolTasks } = await supabase
     .from("school_tasks")
     .select("*")
-    .in("member_id", (members ?? []).map((m) => m.id))
     .order("due_date", { ascending: true });
 
   const { data: family } = await supabase

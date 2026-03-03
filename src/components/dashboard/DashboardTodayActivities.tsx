@@ -81,6 +81,7 @@ export function DashboardTodayActivities({
   const [takingTaskId, setTakingTaskId] = useState<string | null>(null);
   const [assigneeForTask, setAssigneeForTask] = useState<Record<string, string>>({});
   const [sportCompleterForActivity, setSportCompleterForActivity] = useState<Record<string, string>>({});
+  const [schoolCompleterForTask, setSchoolCompleterForTask] = useState<Record<string, string>>({});
   const [celebrationMember, setCelebrationMember] = useState<Member | null>(null);
 
   const getMember = (id: string) => members.find((m) => m.id === id);
@@ -150,15 +151,25 @@ export function DashboardTodayActivities({
 
   async function handleCompleteSchool(taskId: string) {
     const task = schoolTasks.find((t) => t.id === taskId);
-    const member = task?.member_id ? getMember(task.member_id) : null;
+    const targetMemberId = task?.member_id ?? schoolCompleterForTask[taskId];
+    if (!targetMemberId) {
+      alert("Select who completes this activity");
+      return;
+    }
+    const member = getMember(targetMemberId);
     setCompleting(taskId);
-    const res = await completeSchoolTask(taskId);
+    const res = await completeSchoolTask(taskId, task?.member_id ? undefined : targetMemberId);
     setCompleting(null);
     if (res.error) alert(res.error);
     else {
       playSuccessSound();
       fireConfetti();
       if (member) setCelebrationMember(member);
+      setSchoolCompleterForTask((p) => {
+        const next = { ...p };
+        delete next[taskId];
+        return next;
+      });
       router.refresh();
     }
   }
@@ -354,6 +365,7 @@ export function DashboardTodayActivities({
             <div className="space-y-2">
               {schoolTasks.map((t) => {
         const m = t.member_id ? getMember(t.member_id) : null;
+        const needsCompleter = !t.member_id;
         return (
           <motion.div
             key={`school-${t.id}`}
@@ -376,16 +388,26 @@ export function DashboardTodayActivities({
                 </div>
               </div>
             </div>
-            <Button
-              variant="success"
-              size="icon"
-              className={iconBtn}
-              onClick={() => handleCompleteSchool(t.id)}
-              disabled={completing === t.id}
-              title="Complete"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
+            <div className="flex shrink-0 items-center gap-1">
+              {needsCompleter && (
+                <MemberAvatarPicker
+                  members={members}
+                  value={schoolCompleterForTask[t.id] ?? ""}
+                  onChange={(id) => setSchoolCompleterForTask((p) => ({ ...p, [t.id]: id }))}
+                  size="sm"
+                />
+              )}
+              <Button
+                variant="success"
+                size="icon"
+                className={iconBtn}
+                onClick={() => handleCompleteSchool(t.id)}
+                disabled={completing === t.id || (needsCompleter && !schoolCompleterForTask[t.id])}
+                title="Complete"
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+            </div>
           </motion.div>
         );
               })}

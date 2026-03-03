@@ -71,13 +71,13 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="member_id">Member</Label>
+              <Label htmlFor="member_id">Member (optional for research)</Label>
               <select
                 id="member_id"
                 name="member_id"
-                required
                 className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
               >
+                <option value="">Research – no assignee</option>
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name}
@@ -105,6 +105,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                 <option value="homework">Homework</option>
                 <option value="exam">Exam</option>
                 <option value="project">Project</option>
+                <option value="research">Research</option>
               </select>
             </div>
             <div className="space-y-2">
@@ -150,13 +151,13 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <Label>Member</Label>
+                        <Label>Member (optional for research)</Label>
                         <select
                           name="member_id"
-                          required
                           className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
-                          defaultValue={t.member_id}
+                          defaultValue={t.member_id ?? ""}
                         >
+                          <option value="">Research – no assignee</option>
                           {members.map((m) => (
                             <option key={m.id} value={m.id}>{m.name}</option>
                           ))}
@@ -181,6 +182,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                           <option value="homework">Homework</option>
                           <option value="exam">Exam</option>
                           <option value="project">Project</option>
+                          <option value="research">Research</option>
                         </select>
                       </div>
                       <div className="space-y-1">
@@ -213,7 +215,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                       )}
                     </div>
                     <span className="text-slate-500">
-                      {members.find((m) => m.id === t.member_id)?.name ?? "—"} · {t.due_date}
+                      {t.member_id ? members.find((m) => m.id === t.member_id)?.name ?? "—" : "Research"} · {t.due_date}
                     </span>
                     <Button
                       variant="ghost"

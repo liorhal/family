@@ -347,8 +347,8 @@ export async function completeSportActivity(activityId: string, completingMember
   return { success: true, score: activity.score_value };
 }
 
-/** Complete a school task */
-export async function completeSchoolTask(taskId: string) {
+/** Complete a school task. When task has no member_id (research), completingMemberId is required. */
+export async function completeSchoolTask(taskId: string, completingMemberId?: string) {
   const { member, familyId } = await getCurrentMember();
   if (!member || !familyId) return { error: "Unauthorized" };
 
@@ -364,14 +364,27 @@ export async function completeSchoolTask(taskId: string) {
     return { error: "Task not found or already completed" };
   }
 
-  // Verify task belongs to family (member_id in family)
-  const { data: taskMember } = await supabase
-    .from("members")
-    .select("id")
-    .eq("id", task.member_id)
-    .eq("family_id", familyId)
-    .single();
-  if (!taskMember) return { error: "Unauthorized" };
+  let targetMemberId: string;
+  if (task.member_id) {
+    const { data: taskMember } = await supabase
+      .from("members")
+      .select("id")
+      .eq("id", task.member_id)
+      .eq("family_id", familyId)
+      .single();
+    if (!taskMember) return { error: "Unauthorized" };
+    targetMemberId = task.member_id;
+  } else {
+    if (!completingMemberId) return { error: "Select who completes this activity" };
+    const { data: completingMember } = await supabase
+      .from("members")
+      .select("id")
+      .eq("id", completingMemberId)
+      .eq("family_id", familyId)
+      .single();
+    if (!completingMember) return { error: "Invalid member" };
+    targetMemberId = completingMemberId;
+  }
 
   const now = new Date().toISOString();
 
@@ -381,13 +394,13 @@ export async function completeSchoolTask(taskId: string) {
     .eq("id", taskId);
 
   await supabase.from("scores_log").insert({
-    member_id: task.member_id,
+    member_id: targetMemberId,
     source_type: "school",
     source_id: taskId,
     score_delta: task.score_value,
   });
 
-  await updateStreak(task.member_id, familyId);
+  await updateStreak(targetMemberId, familyId);
 
   revalidatePath("/");
   revalidatePath("/today");
@@ -445,10 +458,14 @@ export async function resetActivity(scoreLogId: string, sourceType: string, sour
     }
     await supabase.from("sport_activities").update({ completed_at: null }).eq("id", sourceId);
   } else if (sourceType === "school" && sourceId) {
-    const { data: sch } = await supabase.from("school_tasks").select("id, member_id").eq("id", sourceId).single();
+    const { data: sch } = await supabase.from("school_tasks").select("id, member_id, family_id").eq("id", sourceId).single();
     if (!sch) return { error: "Task not found" };
-    const schMember = await supabase.from("members").select("family_id").eq("id", sch.member_id).single();
-    if (schMember.data?.family_id !== familyId) return { error: "Unauthorized" };
+    if (sch.member_id) {
+      const { data: schMember } = await supabase.from("members").select("family_id").eq("id", sch.member_id).single();
+      if (schMember?.family_id !== familyId) return { error: "Unauthorized" };
+    } else if ((sch as { family_id?: string }).family_id !== familyId) {
+      return { error: "Unauthorized" };
+    }
     await supabase.from("school_tasks").update({ completed_at: null }).eq("id", sourceId);
   }
 
@@ -939,9 +956,10 @@ export async function createSchoolTask(formData: FormData) {
   if (!member || !familyId) return { error: "Unauthorized" };
 
   const supabase = await createClient();
-  const targetMemberId = (formData.get("member_id") as string) || member.id;
+  const memberIdRaw = formData.get("member_id") as string;
+  const targetMemberId = memberIdRaw && memberIdRaw.trim() !== "" ? memberIdRaw : null;
   const title = formData.get("title") as string;
-  const type = (formData.get("type") as "homework" | "exam" | "project") || "homework";
+  const type = (formData.get("type") as "homework" | "exam" | "project" | "research") || "homework";
   const due_date = formData.get("due_date") as string;
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
@@ -950,10 +968,15 @@ export async function createSchoolTask(formData: FormData) {
     : null;
 
   const isAdmin = member.role === "admin";
-  if (targetMemberId !== member.id && !isAdmin) return { error: "Unauthorized" };
+  if (targetMemberId && targetMemberId !== member.id && !isAdmin) return { error: "Unauthorized" };
+  if (targetMemberId) {
+    const { data: m } = await supabase.from("members").select("id").eq("id", targetMemberId).eq("family_id", familyId).single();
+    if (!m) return { error: "Invalid member" };
+  }
 
   const { error } = await supabase.from("school_tasks").insert({
     member_id: targetMemberId,
+    family_id: familyId,
     title,
     type,
     due_date,
@@ -962,6 +985,7 @@ export async function createSchoolTask(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+  revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/today");
   return { success: true };
@@ -975,15 +999,21 @@ export async function updateSchoolTask(taskId: string, formData: FormData) {
   }
 
   const supabase = await createClient();
-  const targetMemberId = formData.get("member_id") as string;
+  const memberIdRaw = formData.get("member_id") as string;
+  const targetMemberId = memberIdRaw && memberIdRaw.trim() !== "" ? memberIdRaw : null;
   const title = formData.get("title") as string;
-  const type = (formData.get("type") as "homework" | "exam" | "project") || "homework";
+  const type = (formData.get("type") as "homework" | "exam" | "project" | "research") || "homework";
   const due_date = formData.get("due_date") as string;
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
   const scheduled_days: number[] | null = Array.isArray(scheduledDaysRaw) && scheduledDaysRaw.length > 0
     ? Array.from(new Set(scheduledDaysRaw.map((d) => Math.max(0, Math.min(6, parseInt(String(d))))).filter((d) => !isNaN(d))))
     : null;
+
+  if (targetMemberId) {
+    const { data: m } = await supabase.from("members").select("id").eq("id", targetMemberId).eq("family_id", familyId).single();
+    if (!m) return { error: "Invalid member" };
+  }
 
   const { error } = await supabase
     .from("school_tasks")

@@ -205,7 +205,6 @@ export default async function DashboardPage() {
   const { data: schoolTasksRaw } = await supabase
     .from("school_tasks")
     .select("*")
-    .in("member_id", (members ?? []).map((m) => m.id))
     .is("completed_at", null)
     .gte("due_date", todayStr)
     .order("due_date", { ascending: true });
@@ -322,6 +321,7 @@ export default async function DashboardPage() {
           activities={[
             ...openTasks.map((t) => ({ type: "house" as const, id: t.id, title: t.title, score_value: t.score_value })),
             ...sportActivities.filter((a) => !a.member_id).map((a) => ({ type: "sport" as const, id: a.id, title: a.title, score_value: a.score_value })),
+            ...schoolTasks.filter((t) => !t.member_id).map((t) => ({ type: "school" as const, id: t.id, title: t.title, score_value: t.score_value })),
           ]}
         />
       </div>

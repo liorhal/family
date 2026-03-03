@@ -1,7 +1,7 @@
 export type MemberRole = "admin" | "kid";
 export type TaskStatus = "open" | "taken" | "completed" | "expired";
 export type SportType = "weekly" | "extra";
-export type SchoolTaskType = "homework" | "exam" | "project";
+export type SchoolTaskType = "homework" | "exam" | "project" | "research";
 export type ScoreSourceType = "house" | "sport" | "school" | "streak_bonus" | "bonus" | "fine";
 
 export interface Family {
@@ -57,7 +57,8 @@ export interface SportActivity {
 
 export interface SchoolTask {
   id: string;
-  member_id: string;
+  member_id: string | null;
+  family_id?: string | null;
   title: string;
   type: SchoolTaskType;
   due_date: string;
