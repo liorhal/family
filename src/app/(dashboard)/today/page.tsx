@@ -120,7 +120,7 @@ export default async function TodayPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold tracking-tight">Today</h1>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Today</h1>
 
       <TodayTasks
         takenTasks={takenTasksWithAssignee}

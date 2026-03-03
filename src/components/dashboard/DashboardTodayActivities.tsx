@@ -174,7 +174,7 @@ export function DashboardTodayActivities({
     }
   }
 
-  const iconBtn = "h-8 w-8 shrink-0";
+  const iconBtn = "h-11 min-h-[44px] min-w-[44px] shrink-0";
   const hasHouse = takenTasks.length > 0 || openTasks.length > 0;
   const hasSport = sportActivities.length > 0;
   const hasSchool = schoolTasks.length > 0;

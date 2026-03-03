@@ -313,11 +313,12 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <RealtimeLeaderboard />
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="min-w-0 truncate text-2xl font-bold tracking-tight sm:text-3xl">
           {family?.name ? `${family.name} Family Dashboard` : "Family Dashboard"}
         </h1>
         <FeelingLuckyButton
+          className="w-full shrink-0 sm:w-auto"
           activities={[
             ...openTasks.map((t) => ({ type: "house" as const, id: t.id, title: t.title, score_value: t.score_value })),
             ...sportActivities.filter((a) => !a.member_id).map((a) => ({ type: "sport" as const, id: a.id, title: a.title, score_value: a.score_value })),

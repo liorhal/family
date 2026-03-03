@@ -202,9 +202,9 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                     </div>
                   </form>
                 ) : (
-                  <div className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-800/50">
-                    <div className="flex-1">
-                      <span>{t.title}</span>
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-800/50">
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate">{t.title}</span>
                       <Badge variant="school" className="ml-2">
                         {t.type}
                       </Badge>
@@ -214,13 +214,14 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                         </span>
                       )}
                     </div>
-                    <span className="text-slate-500">
+                    <span className="shrink-0 text-sm text-slate-500">
                       {t.member_id ? members.find((m) => m.id === t.member_id)?.name ?? "—" : "No default"} · {t.due_date ?? "—"}
                     </span>
+                    <div className="flex shrink-0 gap-1">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-10 min-h-[44px] min-w-[44px]"
                       onClick={() => setEditingId(t.id)}
                       title="Edit task"
                     >
@@ -229,13 +230,14 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      className="h-10 min-h-[44px] min-w-[44px] shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                       onClick={() => handleDelete(t.id)}
                       disabled={deletingId === t.id}
                       title="Delete task"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    </div>
                   </div>
                 )}
               </li>

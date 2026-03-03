@@ -63,11 +63,11 @@ export function AdminMembers({ members }: AdminMembersProps) {
       {showCreateForm && (
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px] space-y-2">
+            <div className="flex-1 min-w-0 sm:min-w-[200px] space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input id="name" name="name" placeholder="e.g. Emma" required />
             </div>
-            <div className="flex-1 min-w-[200px] space-y-2">
+            <div className="flex-1 min-w-0 sm:min-w-[200px] space-y-2">
               <Label htmlFor="role">Role</Label>
               <select
                 id="role"

@@ -20,11 +20,12 @@ export type LuckyActivity =
 
 interface FeelingLuckyButtonProps {
   activities: LuckyActivity[];
+  className?: string;
 }
 
 const DICE_EMOJI = "🎲";
 
-export function FeelingLuckyButton({ activities }: FeelingLuckyButtonProps) {
+export function FeelingLuckyButton({ activities, className }: FeelingLuckyButtonProps) {
   const [open, setOpen] = useState(false);
   const [suggestion, setSuggestion] = useState<LuckyActivity | null>(null);
   const [rolling, setRolling] = useState(false);
@@ -56,7 +57,7 @@ export function FeelingLuckyButton({ activities }: FeelingLuckyButtonProps) {
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSuggestion(null); }}>
       <DialogTrigger asChild>
-        <Button size="lg" disabled={!hasActivities} title={hasActivities ? "Get a random activity suggestion" : "No unassigned activities today"}>
+        <Button size="lg" disabled={!hasActivities} title={hasActivities ? "Get a random activity suggestion" : "No unassigned activities today"} className={className}>
           <span className="mr-2 text-xl">{DICE_EMOJI}</span>
           I&apos;m feeling lucky
         </Button>

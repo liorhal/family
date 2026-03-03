@@ -45,7 +45,7 @@ export function AdminPoints({ members }: AdminPointsProps) {
           className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
         >
           <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px] space-y-2">
+            <div className="flex-1 min-w-0 sm:min-w-[200px] space-y-2">
               <Label htmlFor="member_id">Member</Label>
               <select
                 id="member_id"
@@ -61,7 +61,7 @@ export function AdminPoints({ members }: AdminPointsProps) {
                 ))}
               </select>
             </div>
-            <div className="flex-1 min-w-[200px] space-y-2">
+            <div className="flex-1 min-w-0 sm:min-w-[200px] space-y-2">
               <Label htmlFor="type">Type</Label>
               <select
                 id="type"
