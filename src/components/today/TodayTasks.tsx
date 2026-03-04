@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  takeTask,
+  takeAndCompleteTask,
   releaseTask,
   completeTask,
   completeSportActivity,
@@ -18,7 +18,7 @@ import {
 } from "@/app/actions";
 import { MemberAvatar } from "@/components/MemberAvatar";
 import { MemberAvatarPicker } from "@/components/MemberAvatarPicker";
-import { Check, Dumbbell, BookOpen, Home, UserPlus, RotateCcw } from "lucide-react";
+import { Check, Dumbbell, BookOpen, Home, RotateCcw } from "lucide-react";
 
 interface TakenTask {
   id: string;
@@ -82,7 +82,6 @@ export function TodayTasks({
 }: TodayTasksProps) {
   const router = useRouter();
   const [completing, setCompleting] = useState<string | null>(null);
-  const [takingTaskId, setTakingTaskId] = useState<string | null>(null);
   const [assigneeForTask, setAssigneeForTask] = useState<Record<string, string>>({});
   const [sportCompleterForActivity, setSportCompleterForActivity] = useState<Record<string, string>>({});
   const [schoolCompleterForTask, setSchoolCompleterForTask] = useState<Record<string, string>>({});
@@ -90,22 +89,28 @@ export function TodayTasks({
 
   const getMember = (id: string) => members.find((m) => m.id === id);
 
-  async function handleTakeTask(taskId: string) {
+  async function handleTakeAndComplete(taskId: string) {
     const assigneeId = assigneeForTask[taskId];
     if (!assigneeId) {
-      alert("Select who will do this task");
+      alert("Select who will complete this task");
       return;
     }
-    setTakingTaskId(taskId);
-    const res = await takeTask(taskId, assigneeId);
-    setTakingTaskId(null);
+    setCompleting(taskId);
+    const res = await takeAndCompleteTask(taskId, assigneeId);
+    setCompleting(null);
     setAssigneeForTask((p) => {
       const next = { ...p };
       delete next[taskId];
       return next;
     });
     if (res.error) alert(res.error);
-    else router.refresh();
+    else {
+      playSuccessSound();
+      fireConfetti();
+      const member = getMember(assigneeId);
+      if (member) setCelebrationMember(member);
+      router.refresh();
+    }
   }
 
   async function handleReleaseTask(taskId: string) {
@@ -268,7 +273,7 @@ export function TodayTasks({
           <CardHeader>
             <CardTitle>Available Tasks</CardTitle>
             <p className="text-sm text-slate-500">
-              Take a task and assign it to a family member
+              Select who completes it, then click Complete
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -292,12 +297,13 @@ export function TodayTasks({
                     size="md"
                   />
                   <Button
-                    variant="outline"
-                    onClick={() => handleTakeTask(t.id)}
-                    disabled={takingTaskId === t.id || !assigneeForTask[t.id]}
+                    variant="success"
+                    size="lg"
+                    onClick={() => handleTakeAndComplete(t.id)}
+                    disabled={completing === t.id || !assigneeForTask[t.id]}
                   >
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    {takingTaskId === t.id ? "..." : "Take"}
+                    <Check className="mr-2 h-5 w-5" />
+                    {completing === t.id ? "..." : "Complete"}
                   </Button>
                 </div>
               </motion.div>

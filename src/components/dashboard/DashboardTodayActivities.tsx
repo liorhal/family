@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  takeTask,
+  takeAndCompleteTask,
   releaseTask,
   completeTask,
   completeSportActivity,
@@ -78,7 +78,6 @@ export function DashboardTodayActivities({
 }: DashboardTodayActivitiesProps) {
   const router = useRouter();
   const [completing, setCompleting] = useState<string | null>(null);
-  const [takingTaskId, setTakingTaskId] = useState<string | null>(null);
   const [assigneeForTask, setAssigneeForTask] = useState<Record<string, string>>({});
   const [sportCompleterForActivity, setSportCompleterForActivity] = useState<Record<string, string>>({});
   const [schoolCompleterForTask, setSchoolCompleterForTask] = useState<Record<string, string>>({});
@@ -86,19 +85,25 @@ export function DashboardTodayActivities({
 
   const getMember = (id: string) => members.find((m) => m.id === id);
 
-  async function handleTakeTask(taskId: string) {
+  async function handleTakeAndComplete(taskId: string) {
     const assigneeId = assigneeForTask[taskId];
     if (!assigneeId) return;
-    setTakingTaskId(taskId);
-    const res = await takeTask(taskId, assigneeId);
-    setTakingTaskId(null);
+    setCompleting(taskId);
+    const res = await takeAndCompleteTask(taskId, assigneeId);
+    setCompleting(null);
     setAssigneeForTask((p) => {
       const next = { ...p };
       delete next[taskId];
       return next;
     });
     if (res.error) alert(res.error);
-    else router.refresh();
+    else {
+      const member = getMember(assigneeId);
+      if (member) setCelebrationMember(member);
+      playSuccessSound();
+      fireConfetti();
+      router.refresh();
+    }
   }
 
   async function handleReleaseTask(taskId: string) {
@@ -270,14 +275,14 @@ export function DashboardTodayActivities({
               size="sm"
             />
             <Button
-              variant="outline"
+              variant="success"
               size="icon"
               className={iconBtn}
-              onClick={() => handleTakeTask(t.id)}
-              disabled={takingTaskId === t.id || !assigneeForTask[t.id]}
-              title="Take task"
+              onClick={() => handleTakeAndComplete(t.id)}
+              disabled={completing === t.id || !assigneeForTask[t.id]}
+              title="Complete"
             >
-              <UserPlus className="h-4 w-4" />
+              <Check className="h-4 w-4" />
             </Button>
           </div>
         </motion.div>

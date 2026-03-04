@@ -207,6 +207,13 @@ export async function releaseTask(taskId: string) {
   return { success: true };
 }
 
+/** Take an open task and complete it in one action (assign + complete) */
+export async function takeAndCompleteTask(taskId: string, assigneeId: string) {
+  const takeRes = await takeTask(taskId, assigneeId);
+  if (takeRes.error) return takeRes;
+  return completeTask(taskId);
+}
+
 /** Complete a task and award score */
 export async function completeTask(taskId: string) {
   const { member, familyId } = await getCurrentMember();
