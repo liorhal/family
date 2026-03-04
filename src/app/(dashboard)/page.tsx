@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { format, startOfMonth, endOfMonth, subMonths, subDays, differenceInDays } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, subDays, differenceInDays, getDate, getDaysInMonth } from "date-fns";
 
 import { debugLog } from "@/lib/debug-log";
 
@@ -365,7 +365,13 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Leaderboard members={membersWithStreak} monthlyScores={monthlyByMember} />
+            <Leaderboard
+              members={membersWithStreak}
+              monthlyScores={monthlyByMember}
+              prevMonthScores={prevMonthByMember}
+              currentMonthDaysElapsed={getDate(now)}
+              prevMonthDaysTotal={getDaysInMonth(prevMonthStart)}
+            />
           </CardContent>
         </Card>
 
@@ -377,7 +383,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-slate-500">Monthly score</p>
                 <p className="text-2xl font-bold text-blue-600">
@@ -390,8 +396,14 @@ export default async function DashboardPage() {
                   {bestDay ? `${bestDay.score} pts` : "—"}
                 </p>
                 {bestDay && (
-                  <p className="text-xs text-slate-500">{format(new Date(bestDay.date), "EEE MMM d, yyyy")}</p>
+                  <p className="text-xs text-slate-500">{format(new Date(bestDay.date), "EEE MMM d")}</p>
                 )}
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Days left</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {daysToEndOfMonth} day{daysToEndOfMonth !== 1 ? "s" : ""}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-slate-500">Longest streak</p>
@@ -402,23 +414,17 @@ export default async function DashboardPage() {
                   <p className="text-xs text-slate-500">{longestStreakMember.name}</p>
                 )}
               </div>
-              <div>
-                <p className="text-sm text-slate-500">Previous month winner</p>
-                <p className="text-2xl font-bold text-amber-600">
-                  {prevMonthWinner ? prevMonthWinner.name : "—"}
+            </div>
+            <div className="mt-4">
+              <p className="text-sm text-slate-500">Previous month winner</p>
+              <p className="text-lg font-bold text-amber-600">
+                {prevMonthWinner ? prevMonthWinner.name : "—"}
+              </p>
+              {prevMonthWinner && (
+                <p className="text-xs text-slate-500">
+                  {format(prevMonthStart, "MMM yyyy")} · {prevMonthScore} pts
                 </p>
-                {prevMonthWinner && (
-                  <p className="text-xs text-slate-500">
-                    {format(prevMonthStart, "MMM yyyy")} · {prevMonthScore} pts
-                  </p>
-                )}
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Days to end of month</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {daysToEndOfMonth} day{daysToEndOfMonth !== 1 ? "s" : ""}
-                </p>
-              </div>
+              )}
             </div>
             <div className="mt-4">
               <p className="mb-2 text-sm font-medium text-slate-600">Last 7 days</p>
