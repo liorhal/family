@@ -6,6 +6,7 @@ import confetti from "canvas-confetti";
 import { motion } from "framer-motion";
 import { playSuccessSound } from "@/lib/celebration";
 import { CelebrationOverlay } from "@/components/CelebrationOverlay";
+import { BadgeCelebrationOverlay } from "@/components/BadgeCelebrationOverlay";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,7 @@ export function DashboardTodayActivities({
   const [sportCompleterForActivity, setSportCompleterForActivity] = useState<Record<string, string>>({});
   const [schoolCompleterForTask, setSchoolCompleterForTask] = useState<Record<string, string>>({});
   const [celebrationMember, setCelebrationMember] = useState<Member | null>(null);
+  const [badgeCelebration, setBadgeCelebration] = useState<{ memberName: string; badgeTitles: string[] } | null>(null);
 
   const getMember = (id: string) => members.find((m) => m.id === id);
 
@@ -100,6 +102,12 @@ export function DashboardTodayActivities({
     else {
       const member = getMember(assigneeId);
       if (member) setCelebrationMember(member);
+      if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
+        setBadgeCelebration({
+          memberName: member.name,
+          badgeTitles: res.newlyEarnedBadges.map((b) => b.title),
+        });
+      }
       playSuccessSound();
       fireConfetti();
       router.refresh();
@@ -122,9 +130,15 @@ export function DashboardTodayActivities({
     setCompleting(null);
     if (res.error) alert(res.error);
     else {
+      if (member) setCelebrationMember(member);
+      if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
+        setBadgeCelebration({
+          memberName: member.name,
+          badgeTitles: res.newlyEarnedBadges.map((b) => b.title),
+        });
+      }
       playSuccessSound();
       fireConfetti();
-      if (member) setCelebrationMember(member);
       router.refresh();
     }
   }
@@ -142,9 +156,15 @@ export function DashboardTodayActivities({
     setCompleting(null);
     if (res.error) alert(res.error);
     else {
+      if (member) setCelebrationMember(member);
+      if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
+        setBadgeCelebration({
+          memberName: member.name,
+          badgeTitles: res.newlyEarnedBadges.map((b) => b.title),
+        });
+      }
       playSuccessSound();
       fireConfetti();
-      if (member) setCelebrationMember(member);
       setSportCompleterForActivity((p) => {
         const next = { ...p };
         delete next[activityId];
@@ -167,9 +187,15 @@ export function DashboardTodayActivities({
     setCompleting(null);
     if (res.error) alert(res.error);
     else {
+      if (member) setCelebrationMember(member);
+      if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
+        setBadgeCelebration({
+          memberName: member.name,
+          badgeTitles: res.newlyEarnedBadges.map((b) => b.title),
+        });
+      }
       playSuccessSound();
       fireConfetti();
-      if (member) setCelebrationMember(member);
       setSchoolCompleterForTask((p) => {
         const next = { ...p };
         delete next[taskId];
@@ -191,6 +217,13 @@ export function DashboardTodayActivities({
           memberName={celebrationMember.name}
           avatarUrl={celebrationMember.avatar_url}
           onComplete={() => setCelebrationMember(null)}
+        />
+      )}
+      {badgeCelebration && (
+        <BadgeCelebrationOverlay
+          memberName={badgeCelebration.memberName}
+          badgeTitles={badgeCelebration.badgeTitles}
+          onComplete={() => setBadgeCelebration(null)}
         />
       )}
 

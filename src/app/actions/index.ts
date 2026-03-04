@@ -280,10 +280,11 @@ export async function completeTask(taskId: string) {
   // 4. Update streak
   await updateStreak(targetMemberId, familyId);
 
+  const newlyEarnedBadges = await getNewlyEarnedBadges(targetMemberId);
   revalidatePath("/");
   revalidatePath("/today");
   revalidatePath("/admin");
-  return { success: true, score: task.score_value };
+  return { success: true, score: task.score_value, newlyEarnedBadges };
 }
 
 /** Complete a sport activity. When activity has no member_id, completingMemberId is required. */
@@ -349,9 +350,10 @@ export async function completeSportActivity(activityId: string, completingMember
 
   await updateStreak(targetMemberId, familyId);
 
+  const newlyEarnedBadges = await getNewlyEarnedBadges(targetMemberId);
   revalidatePath("/");
   revalidatePath("/today");
-  return { success: true, score: activity.score_value };
+  return { success: true, score: activity.score_value, newlyEarnedBadges };
 }
 
 /** Complete a school task. When task has no member_id (research), completingMemberId is required. */
@@ -409,9 +411,10 @@ export async function completeSchoolTask(taskId: string, completingMemberId?: st
 
   await updateStreak(targetMemberId, familyId);
 
+  const newlyEarnedBadges = await getNewlyEarnedBadges(targetMemberId);
   revalidatePath("/");
   revalidatePath("/today");
-  return { success: true, score: task.score_value };
+  return { success: true, score: task.score_value, newlyEarnedBadges };
 }
 
 /** Reset (undo) a completed activity - removes score and marks source as incomplete */
@@ -688,6 +691,15 @@ export async function getBadgeProgress(memberId: string): Promise<{ error?: stri
   }
 
   return { data: result };
+}
+
+/** Returns badges that were just earned (current === threshold). Call after a completion. */
+async function getNewlyEarnedBadges(memberId: string): Promise<{ title: string }[]> {
+  const res = await getBadgeProgress(memberId);
+  if (res.error || !res.data) return [];
+  return res.data
+    .filter((p) => p.earned && p.current === p.threshold)
+    .map((p) => ({ title: p.title }));
 }
 
 export interface FamilyBadgeEntry extends BadgeProgress {
