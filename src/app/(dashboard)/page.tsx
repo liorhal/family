@@ -340,7 +340,7 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-8">
       <RealtimeLeaderboard />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="min-w-0 truncate text-2xl font-bold tracking-tight sm:text-3xl">
@@ -356,7 +356,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

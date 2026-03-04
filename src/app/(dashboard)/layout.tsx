@@ -42,7 +42,7 @@ export default async function DashboardLayout({
 
   debugLog("layout.tsx", "layout_render", { hypothesisId: "H2" });
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30">
       <Header
         memberName={member.name}
         memberRole={member.role}
