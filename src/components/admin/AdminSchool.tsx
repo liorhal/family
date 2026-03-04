@@ -152,17 +152,13 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <Label>Member (optional for research)</Label>
-                        <select
+                        <FormMemberSelect
+                          members={members}
                           name="member_id"
-                          className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
-                          defaultValue={t.member_id ?? ""}
-                        >
-                          <option value="">Research – no assignee</option>
-                          {members.map((m) => (
-                            <option key={m.id} value={m.id}>{m.name}</option>
-                          ))}
-                        </select>
+                          value={editMemberId[t.id] ?? t.member_id ?? ""}
+                          onChange={(id) => setEditMemberId((p) => ({ ...p, [t.id]: id }))}
+                          label="Member (optional for research)"
+                        />
                       </div>
                       <div className="space-y-1">
                         <Label>Title</Label>
@@ -223,7 +219,10 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                       variant="ghost"
                       size="icon"
                       className="h-10 min-h-[44px] min-w-[44px]"
-                      onClick={() => setEditingId(t.id)}
+                      onClick={() => {
+                        setEditingId(t.id);
+                        setEditMemberId((p) => ({ ...p, [t.id]: t.member_id ?? "" }));
+                      }}
                       title="Edit task"
                     >
                       <Pencil className="h-4 w-4" />

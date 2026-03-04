@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AdminSection } from "./AdminSection";
+import { FormMemberSelect } from "./FormMemberSelect";
 import type { Member } from "@/lib/db/types";
 
 interface AdminPointsProps {
@@ -17,6 +18,7 @@ export function AdminPoints({ members }: AdminPointsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [memberId, setMemberId] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -28,6 +30,7 @@ export function AdminPoints({ members }: AdminPointsProps) {
     else {
       (e.target as HTMLFormElement).reset();
       setShowForm(false);
+      setMemberId("");
       router.refresh();
     }
   }
@@ -45,21 +48,14 @@ export function AdminPoints({ members }: AdminPointsProps) {
           className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
         >
           <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-0 sm:min-w-[200px] space-y-2">
-              <Label htmlFor="member_id">Member</Label>
-              <select
-                id="member_id"
+            <div className="flex-1 min-w-0 sm:min-w-[200px]">
+              <FormMemberSelect
+                members={members}
                 name="member_id"
-                required
-                className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
-              >
-                <option value="">Select member</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
+                value={memberId}
+                onChange={setMemberId}
+                label="Member"
+              />
             </div>
             <div className="flex-1 min-w-0 sm:min-w-[200px] space-y-2">
               <Label htmlFor="type">Type</Label>
@@ -93,7 +89,7 @@ export function AdminPoints({ members }: AdminPointsProps) {
             />
           </div>
           <div className="flex gap-2">
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !memberId}>
               {loading ? "Adding…" : "Add"}
             </Button>
             <Button
