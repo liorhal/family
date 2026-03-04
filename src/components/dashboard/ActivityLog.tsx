@@ -48,6 +48,8 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
   const [days, setDays] = useState(1);
   const [filterMemberId, setFilterMemberId] = useState<string>("");
   const [resettingId, setResettingId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const INITIAL_ROWS = 8;
 
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
@@ -58,6 +60,8 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
     filterMemberId === ""
       ? entriesInRange
       : entriesInRange.filter((e) => e.member_id === filterMemberId);
+  const displayedEntries = showAll ? filteredEntries : filteredEntries.slice(0, INITIAL_ROWS);
+  const hasMore = filteredEntries.length > INITIAL_ROWS;
 
   async function handleReset(entry: ActivityEntry) {
     if (entry.source_type === "streak_bonus") return;
@@ -108,7 +112,7 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
       </div>
 
       <ul className="space-y-2">
-        {filteredEntries.map((entry) => (
+        {displayedEntries.map((entry) => (
           <li
             key={entry.id}
             className="flex items-center gap-3 rounded-lg bg-slate-50 p-2 dark:bg-slate-800/50"
@@ -151,7 +155,16 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
           </li>
         ))}
       </ul>
-
+      {hasMore && !showAll && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowAll(true)}
+          className="w-full text-slate-500"
+        >
+          Show more ({filteredEntries.length - INITIAL_ROWS} more)
+        </Button>
+      )}
       {filteredEntries.length === 0 && (
         <p className="text-sm text-slate-500">
           No activities in the last {days} day{days !== 1 ? "s" : ""}

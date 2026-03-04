@@ -120,6 +120,35 @@ export default async function DashboardPage() {
 
   const daysToEndOfMonth = differenceInDays(endOfMonth(now), now) + 1;
 
+  // Best day: daily totals from last 90 days
+  const ninetyDaysAgo = subDays(now, 90).toISOString();
+  const { data: scoresForBestDay } = await supabase
+    .from("scores_log")
+    .select("member_id, source_type, score_delta, created_at")
+    .in("member_id", (members ?? []).map((m) => m.id))
+    .gte("created_at", ninetyDaysAgo);
+  const dailyTotals: Record<string, number> = {};
+  for (const s of scoresForBestDay ?? []) {
+    const dateKey = format(new Date(s.created_at), "yyyy-MM-dd");
+    const delta = s.source_type === "fine" ? -s.score_delta : s.score_delta;
+    dailyTotals[dateKey] = (dailyTotals[dateKey] ?? 0) + delta;
+  }
+  const bestDayEntry = Object.entries(dailyTotals).sort(([, a], [, b]) => b - a)[0];
+  const bestDay = bestDayEntry
+    ? { date: bestDayEntry[0], score: bestDayEntry[1] }
+    : null;
+
+  // Longest streak member
+  let longestStreakMember: { name: string; longest_streak: number } | null = null;
+  for (const m of members ?? []) {
+    const s = streakMap[m.id]?.longest_streak ?? 0;
+    if (s > (longestStreakMember?.longest_streak ?? 0)) {
+      longestStreakMember = { name: m.name, longest_streak: s };
+    }
+  }
+
+  const prevMonthScore = prevMonthWinnerId ? prevMonthByMember[prevMonthWinnerId] ?? 0 : 0;
+
   // #region agent log
   debugLog("dashboard/page.tsx", "dashboard_data_ready", { hypothesisId: "H4", membersCount: (members ?? []).length });
   // #endregion
@@ -356,16 +385,33 @@ export default async function DashboardPage() {
                 </p>
               </div>
               <div>
+                <p className="text-sm text-slate-500">Best day</p>
+                <p className="text-2xl font-bold text-emerald-600">
+                  {bestDay ? `${bestDay.score} pts` : "—"}
+                </p>
+                {bestDay && (
+                  <p className="text-xs text-slate-500">{format(new Date(bestDay.date), "EEE MMM d, yyyy")}</p>
+                )}
+              </div>
+              <div>
                 <p className="text-sm text-slate-500">Longest streak</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {Math.max(...(members ?? []).map((m) => streakMap[m.id]?.longest_streak ?? 0), 0)} days
+                  {longestStreakMember ? `${longestStreakMember.longest_streak} days` : "0 days"}
                 </p>
+                {longestStreakMember && (
+                  <p className="text-xs text-slate-500">{longestStreakMember.name}</p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-slate-500">Previous month winner</p>
                 <p className="text-2xl font-bold text-amber-600">
                   {prevMonthWinner ? prevMonthWinner.name : "—"}
                 </p>
+                {prevMonthWinner && (
+                  <p className="text-xs text-slate-500">
+                    {format(prevMonthStart, "MMM yyyy")} · {prevMonthScore} pts
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-slate-500">Days to end of month</p>

@@ -8,8 +8,8 @@ import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 interface AdminSectionProps {
   title: string;
   description?: string;
-  createButtonLabel: string;
-  onCreateClick: () => void;
+  createButtonLabel?: string;
+  onCreateClick?: () => void;
   children: React.ReactNode;
 }
 
@@ -24,7 +24,7 @@ export function AdminSection({
 
   function handleCreateClick() {
     setCollapsed(false);
-    onCreateClick();
+    onCreateClick?.();
   }
 
   return (
@@ -44,19 +44,21 @@ export function AdminSection({
               )}
             </div>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCreateClick();
-            }}
-            className="shrink-0"
-          >
-            <Plus className="mr-1.5 h-4 w-4" />
-            {createButtonLabel}
-          </Button>
+          {createButtonLabel && onCreateClick && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCreateClick();
+              }}
+              className="shrink-0"
+            >
+              <Plus className="mr-1.5 h-4 w-4" />
+              {createButtonLabel}
+            </Button>
+          )}
         </div>
       </CardHeader>
       {!collapsed && <CardContent className="space-y-6">{children}</CardContent>}

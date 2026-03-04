@@ -13,6 +13,7 @@ import { getDayName } from "@/lib/utils";
 import { Trash2, Pencil } from "lucide-react";
 import { AdminSection } from "./AdminSection";
 import { DayCheckboxes } from "./DayCheckboxes";
+import { FormMemberSelect } from "./FormMemberSelect";
 
 interface AdminSportProps {
   activities: SportActivity[];
@@ -25,6 +26,8 @@ export function AdminSport({ activities, members }: AdminSportProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createMemberId, setCreateMemberId] = useState("");
+  const [editMemberId, setEditMemberId] = useState<Record<string, string>>({});
 
   async function handleEdit(activityId: string, formData: FormData) {
     setLoading(true);
@@ -33,6 +36,11 @@ export function AdminSport({ activities, members }: AdminSportProps) {
     if (res.error) alert(res.error);
     else {
       setEditingId(null);
+      setEditMemberId((p) => {
+        const next = { ...p };
+        delete next[activityId];
+        return next;
+      });
       router.refresh();
     }
   }
@@ -56,6 +64,7 @@ export function AdminSport({ activities, members }: AdminSportProps) {
     else {
       (e.target as HTMLFormElement).reset();
       setShowCreateForm(false);
+      setCreateMemberId("");
       router.refresh();
     }
   }
@@ -70,21 +79,13 @@ export function AdminSport({ activities, members }: AdminSportProps) {
       {showCreateForm && !editingId && (
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="member_id">Member (optional)</Label>
-              <select
-                id="member_id"
-                name="member_id"
-                className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
-              >
-                <option value="">No default — assign when completing</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <FormMemberSelect
+              members={members}
+              name="member_id"
+              value={createMemberId}
+              onChange={setCreateMemberId}
+              label="Default member (optional)"
+            />
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input id="title" name="title" placeholder="e.g. Soccer practice" required />
@@ -142,19 +143,13 @@ export function AdminSport({ activities, members }: AdminSportProps) {
                     className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="space-y-1">
-                        <Label>Member (optional)</Label>
-                        <select
-                          name="member_id"
-                          className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
-                          defaultValue={a.member_id ?? ""}
-                        >
-                          <option value="">No default</option>
-                          {members.map((m) => (
-                            <option key={m.id} value={m.id}>{m.name}</option>
-                          ))}
-                        </select>
-                      </div>
+                      <FormMemberSelect
+                        members={members}
+                        name="member_id"
+                        value={editMemberId[a.id] ?? a.member_id ?? ""}
+                        onChange={(id) => setEditMemberId((p) => ({ ...p, [a.id]: id }))}
+                        label="Default member (optional)"
+                      />
                       <div className="space-y-1">
                         <Label>Title</Label>
                         <Input name="title" defaultValue={a.title} required />

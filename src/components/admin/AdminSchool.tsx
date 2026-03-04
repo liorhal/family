@@ -13,6 +13,7 @@ import type { SchoolTask } from "@/lib/db/types";
 import { getDayName } from "@/lib/utils";
 import { AdminSection } from "./AdminSection";
 import { DayCheckboxes } from "./DayCheckboxes";
+import { FormMemberSelect } from "./FormMemberSelect";
 
 interface AdminSchoolProps {
   tasks: SchoolTask[];
@@ -25,6 +26,8 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createMemberId, setCreateMemberId] = useState("");
+  const [editMemberId, setEditMemberId] = useState<Record<string, string>>({});
 
   async function handleEdit(taskId: string, formData: FormData) {
     setLoading(true);
@@ -33,6 +36,11 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
     if (res.error) alert(res.error);
     else {
       setEditingId(null);
+      setEditMemberId((p) => {
+        const next = { ...p };
+        delete next[taskId];
+        return next;
+      });
       router.refresh();
     }
   }
@@ -56,6 +64,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
     else {
       (e.target as HTMLFormElement).reset();
       setShowCreateForm(false);
+      setCreateMemberId("");
       router.refresh();
     }
   }
@@ -70,21 +79,13 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
       {showCreateForm && !editingId && (
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="member_id">Default member</Label>
-              <select
-                id="member_id"
-                name="member_id"
-                className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
-              >
-                <option value="">No default</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <FormMemberSelect
+              members={members}
+              name="member_id"
+              value={createMemberId}
+              onChange={setCreateMemberId}
+              label="Default member"
+            />
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input id="title" name="title" placeholder="e.g. Math homework" required />

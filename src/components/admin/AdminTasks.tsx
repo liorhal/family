@@ -12,6 +12,7 @@ import type { Member } from "@/lib/db/types";
 import type { Task } from "@/lib/db/types";
 import { AdminSection } from "./AdminSection";
 import { DayCheckboxes } from "./DayCheckboxes";
+import { FormMemberSelect } from "./FormMemberSelect";
 import { getDayName } from "@/lib/utils";
 
 interface AdminTasksProps {
@@ -25,6 +26,8 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createDefaultAssignee, setCreateDefaultAssignee] = useState("");
+  const [editDefaultAssignee, setEditDefaultAssignee] = useState<Record<string, string>>({});
 
   async function handleEdit(taskId: string, formData: FormData) {
     setLoading(true);
@@ -33,6 +36,11 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
     if (res.error) alert(res.error);
     else {
       setEditingId(null);
+      setEditDefaultAssignee((p) => {
+        const next = { ...p };
+        delete next[taskId];
+        return next;
+      });
       router.refresh();
     }
   }
@@ -56,6 +64,7 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
     else {
       (e.target as HTMLFormElement).reset();
       setShowCreateForm(false);
+      setCreateDefaultAssignee("");
       router.refresh();
     }
   }
@@ -110,22 +119,13 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
                 Always open – resets to tomorrow when completed
               </label>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="default_assignee_id">Default assignee (optional)</Label>
-              <select
-                id="default_assignee_id"
-                name="default_assignee_id"
-                defaultValue=""
-                className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
-              >
-                <option value="">Anyone</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <FormMemberSelect
+              members={members}
+              name="default_assignee_id"
+              value={createDefaultAssignee}
+              onChange={setCreateDefaultAssignee}
+              label="Default assignee (optional)"
+            />
           </div>
           <div className="flex gap-2">
             <Button type="submit" disabled={loading}>
@@ -184,19 +184,13 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
                           Always open
                         </label>
                       </div>
-                      <div className="space-y-1">
-                        <Label>Default assignee</Label>
-                        <select
-                          name="default_assignee_id"
-                          className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"
-                          defaultValue={t.default_assignee_id ?? ""}
-                        >
-                          <option value="">Anyone</option>
-                          {members.map((m) => (
-                            <option key={m.id} value={m.id}>{m.name}</option>
-                          ))}
-                        </select>
-                      </div>
+                      <FormMemberSelect
+                        members={members}
+                        name="default_assignee_id"
+                        value={editDefaultAssignee[t.id] ?? t.default_assignee_id ?? ""}
+                        onChange={(id) => setEditDefaultAssignee((p) => ({ ...p, [t.id]: id }))}
+                        label="Default assignee"
+                      />
                     </div>
                     <div className="mt-3 flex gap-2">
                       <Button type="submit" disabled={loading}>Save</Button>

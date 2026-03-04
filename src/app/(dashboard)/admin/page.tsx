@@ -58,8 +58,6 @@ export default async function AdminPage() {
     <div className="space-y-8">
       <h1 className="text-3xl font-bold tracking-tight">Parent Panel</h1>
 
-      <AdminSettings showResetButton={family?.show_reset_button ?? false} />
-
       <AdminMembers members={members ?? []} />
 
       <AdminPoints members={members ?? []} />
@@ -75,6 +73,8 @@ export default async function AdminPage() {
         tasks={schoolTasks ?? []}
         members={members ?? []}
       />
+
+      <AdminSettings showResetButton={family?.show_reset_button ?? false} />
     </div>
   );
 }

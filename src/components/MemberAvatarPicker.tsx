@@ -22,6 +22,7 @@ interface MemberAvatarPickerProps {
   onChange: (memberId: string) => void;
   size?: "sm" | "md";
   className?: string;
+  allowEmpty?: boolean;
 }
 
 export function MemberAvatarPicker({
@@ -30,6 +31,7 @@ export function MemberAvatarPicker({
   onChange,
   size = "sm",
   className,
+  allowEmpty = false,
 }: MemberAvatarPickerProps) {
   const avatarSize = size === "sm" ? "sm" : "md";
   const triggerSize = size === "sm" ? "h-8 w-8" : "h-10 w-10";
@@ -56,6 +58,18 @@ export function MemberAvatarPicker({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[10rem] p-1">
+        {allowEmpty && (
+          <DropdownMenuItem
+            onSelect={() => onChange("")}
+            className={cn(
+              "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 focus:bg-slate-100 dark:focus:bg-slate-800",
+              !value && "bg-slate-100 dark:bg-slate-800"
+            )}
+          >
+            <UserPlus className="h-4 w-4 shrink-0 text-slate-400" />
+            <span className="text-slate-500">No default</span>
+          </DropdownMenuItem>
+        )}
         {members.map((m) => (
           <DropdownMenuItem
             key={m.id}

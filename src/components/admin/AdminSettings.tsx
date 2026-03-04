@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateFamilySettings } from "@/app/actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings } from "lucide-react";
+import { AdminSection } from "./AdminSection";
 
 interface AdminSettingsProps {
   showResetButton: boolean;
@@ -30,15 +29,8 @@ export function AdminSettings({ showResetButton }: AdminSettingsProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Settings className="h-5 w-5 text-slate-500" />
-          Settings
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <AdminSection title="Settings" description="Family and display options">
+      <form onSubmit={handleSubmit} className="space-y-4">
           <input type="hidden" name="show_reset_button" value={showReset ? "true" : "false"} />
           <label className="flex cursor-pointer items-center gap-3">
             <input
@@ -53,7 +45,6 @@ export function AdminSettings({ showResetButton }: AdminSettingsProps) {
             {loading ? "Saving…" : "Save"}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+    </AdminSection>
   );
 }
