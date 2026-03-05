@@ -23,6 +23,7 @@ export function AdminMembers({ members }: AdminMembersProps) {
   const [avatar, setAvatar] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAvatar, setEditAvatar] = useState<string>("");
+  const [editFormDirty, setEditFormDirty] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -103,6 +104,7 @@ export function AdminMembers({ members }: AdminMembersProps) {
                 {editingId === m.id ? (
                   <form
                     onSubmit={(e) => handleEdit(m.id, e)}
+                    onChange={() => setEditFormDirty(true)}
                     className="flex flex-col gap-2 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
                   >
                     <div className="flex flex-wrap gap-2">
@@ -126,7 +128,7 @@ export function AdminMembers({ members }: AdminMembersProps) {
                         </select>
                       </div>
                     </div>
-                    <AvatarPicker name="avatar_url" value={editAvatar} onChange={setEditAvatar} memberId={m.id} />
+                    <AvatarPicker name="avatar_url" value={editAvatar} onChange={(v) => { setEditAvatar(v); setEditFormDirty(true); }} memberId={m.id} />
                     <div className="flex gap-2">
                       <Button type="submit" disabled={loading}>Save</Button>
                       <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
@@ -148,6 +150,7 @@ export function AdminMembers({ members }: AdminMembersProps) {
                       onClick={() => {
                         setEditingId(m.id);
                         setEditAvatar(m.avatar_url ?? "");
+                        setEditFormDirty(false);
                       }}
                       title="Edit member"
                     >

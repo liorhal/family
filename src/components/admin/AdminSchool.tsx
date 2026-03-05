@@ -26,6 +26,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editFormDirty, setEditFormDirty] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createMemberId, setCreateMemberId] = useState("");
   const [editMemberId, setEditMemberId] = useState<Record<string, string>>({});
@@ -149,6 +150,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                       const form = e.currentTarget;
                       handleEdit(t.id, new FormData(form));
                     }}
+                    onChange={() => setEditFormDirty(true)}
                     className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -193,7 +195,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                       </div>
                     </div>
                     <div className="mt-3 flex gap-2">
-                      <Button type="submit" disabled={loading}>Save</Button>
+                      <Button type="submit" disabled={loading || !editFormDirty}>Save</Button>
                       <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
                         Cancel
                       </Button>
@@ -223,6 +225,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                       onClick={() => {
                         setEditingId(t.id);
                         setEditMemberId((p) => ({ ...p, [t.id]: t.member_id ?? "" }));
+                        setEditFormDirty(false);
                       }}
                       title="Edit task"
                     >

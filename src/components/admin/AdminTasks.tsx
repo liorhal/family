@@ -26,6 +26,7 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editFormDirty, setEditFormDirty] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createDefaultAssignee, setCreateDefaultAssignee] = useState("");
   const [editDefaultAssignee, setEditDefaultAssignee] = useState<Record<string, string>>({});
@@ -152,6 +153,7 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
                       const form = e.currentTarget;
                       handleEdit(t.id, new FormData(form));
                     }}
+                    onChange={() => setEditFormDirty(true)}
                     className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -194,7 +196,7 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
                       />
                     </div>
                     <div className="mt-3 flex gap-2">
-                      <Button type="submit" disabled={loading}>Save</Button>
+                      <Button type="submit" disabled={loading || !editFormDirty}>Save</Button>
                       <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
                         Cancel
                       </Button>
@@ -220,7 +222,7 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => setEditingId(t.id)}
+                      onClick={() => { setEditingId(t.id); setEditFormDirty(false); }}
                       title="Edit task"
                     >
                       <Pencil className="h-4 w-4" />

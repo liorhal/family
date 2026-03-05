@@ -26,6 +26,7 @@ export function AdminSport({ activities, members }: AdminSportProps) {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editFormDirty, setEditFormDirty] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createMemberId, setCreateMemberId] = useState("");
   const [editMemberId, setEditMemberId] = useState<Record<string, string>>({});
@@ -148,7 +149,7 @@ export function AdminSport({ activities, members }: AdminSportProps) {
                         members={members}
                         name="member_id"
                         value={editMemberId[a.id] ?? a.member_id ?? ""}
-                        onChange={(id) => setEditMemberId((p) => ({ ...p, [a.id]: id }))}
+                        onChange={(id) => { setEditMemberId((p) => ({ ...p, [a.id]: id })); setEditFormDirty(true); }}
                         label="Default member (optional)"
                       />
                       <div className="space-y-1">
@@ -177,7 +178,7 @@ export function AdminSport({ activities, members }: AdminSportProps) {
                       </div>
                     </div>
                     <div className="mt-3 flex gap-2">
-                      <Button type="submit" disabled={loading}>Save</Button>
+                      <Button type="submit" disabled={loading || !editFormDirty}>Save</Button>
                       <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
                         Cancel
                       </Button>
@@ -200,7 +201,7 @@ export function AdminSport({ activities, members }: AdminSportProps) {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => setEditingId(a.id)}
+                      onClick={() => { setEditingId(a.id); setEditFormDirty(false); }}
                       title="Edit activity"
                     >
                       <Pencil className="h-4 w-4" />

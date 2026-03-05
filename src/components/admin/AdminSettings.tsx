@@ -25,6 +25,13 @@ export function AdminSettings({ showResetButton, showRemoveFromToday: initialRem
   const [prize, setPrize] = useState(jarPrize);
   const [header, setHeader] = useState(dashboardHeader);
 
+  const hasChanges =
+    showReset !== showResetButton ||
+    showRemove !== initialRemove ||
+    target !== String(jarTarget) ||
+    prize !== jarPrize ||
+    (header ?? "") !== (dashboardHeader ?? "");
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -103,7 +110,7 @@ export function AdminSettings({ showResetButton, showRemoveFromToday: initialRem
             />
             <span className="text-sm font-medium">Allow removing activities from today (reappears tomorrow)</span>
           </label>
-          <Button type="submit" size="sm" disabled={loading}>
+          <Button type="submit" size="sm" disabled={loading || !hasChanges}>
             {loading ? "Saving…" : "Save"}
           </Button>
         </form>
