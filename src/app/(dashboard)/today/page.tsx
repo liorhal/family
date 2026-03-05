@@ -65,8 +65,9 @@ export default async function TodayPage() {
   const sportActivities = (sportActivitiesRaw ?? [])
     .filter(
       (a) =>
-        a.type === "extra" ||
-        ((a.scheduled_days?.length ?? 0) > 0 && a.scheduled_days!.includes(dayOfWeek))
+        !a.scheduled_days ||
+        a.scheduled_days.length === 0 ||
+        a.scheduled_days.includes(dayOfWeek)
     )
     .sort((a, b) => {
       if (a.type === "extra" && b.type !== "extra") return -1;

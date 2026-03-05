@@ -138,6 +138,24 @@ export default async function DashboardPage() {
     ? { date: bestDayEntry[0], score: bestDayEntry[1] }
     : null;
 
+  // Best month: family total per month (last 24 months)
+  const twoYearsAgo = subMonths(now, 24).toISOString();
+  const { data: scoresForBestMonth } = await supabase
+    .from("scores_log")
+    .select("member_id, source_type, score_delta, created_at")
+    .in("member_id", (members ?? []).map((m) => m.id))
+    .gte("created_at", twoYearsAgo);
+  const monthlyTotals: Record<string, number> = {};
+  for (const s of scoresForBestMonth ?? []) {
+    const monthKey = format(new Date(s.created_at), "yyyy-MM");
+    const delta = s.source_type === "fine" ? -s.score_delta : s.score_delta;
+    monthlyTotals[monthKey] = (monthlyTotals[monthKey] ?? 0) + delta;
+  }
+  const bestMonthEntry = Object.entries(monthlyTotals).sort(([, a], [, b]) => b - a)[0];
+  const bestMonth = bestMonthEntry
+    ? { month: bestMonthEntry[0], score: bestMonthEntry[1] }
+    : null;
+
   // Longest streak member
   let longestStreakMember: { name: string; longest_streak: number } | null = null;
   for (const m of members ?? []) {
@@ -228,8 +246,9 @@ export default async function DashboardPage() {
   const sportActivities = (sportActivitiesRaw ?? [])
     .filter(
       (a) =>
-        a.type === "extra" ||
-        ((a.scheduled_days?.length ?? 0) > 0 && a.scheduled_days!.includes(dayOfWeek))
+        !a.scheduled_days ||
+        a.scheduled_days.length === 0 ||
+        a.scheduled_days.includes(dayOfWeek)
     )
     .filter((a) => !dismissedSet.has(`sport:${a.id}`))
     .sort((a, b) => {
@@ -397,7 +416,7 @@ export default async function DashboardPage() {
               Statistics
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-slate-500">Monthly score</p>
@@ -405,6 +424,14 @@ export default async function DashboardPage() {
                   {Object.values(monthlyByMember).reduce((sum, n) => sum + n, 0)} pts
                 </p>
               </div>
+              <div>
+                <p className="text-sm text-slate-500">Days left</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {daysToEndOfMonth} day{daysToEndOfMonth !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-slate-500">Best day</p>
                 <p className="text-2xl font-bold text-emerald-600">
@@ -415,10 +442,26 @@ export default async function DashboardPage() {
                 )}
               </div>
               <div>
-                <p className="text-sm text-slate-500">Days left</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {daysToEndOfMonth} day{daysToEndOfMonth !== 1 ? "s" : ""}
+                <p className="text-sm text-slate-500">Best month</p>
+                <p className="text-2xl font-bold text-emerald-600">
+                  {bestMonth ? `${bestMonth.score} pts` : "—"}
                 </p>
+                {bestMonth && (
+                  <p className="text-xs text-slate-500">{format(new Date(bestMonth.month + "-01"), "MMM yyyy")}</p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-slate-500">Prev month winner</p>
+                <p className="text-2xl font-bold text-amber-600">
+                  {prevMonthWinner ? prevMonthWinner.name : "—"}
+                </p>
+                {prevMonthWinner && (
+                  <p className="text-xs text-slate-500">
+                    {format(prevMonthStart, "MMM yyyy")} · {prevMonthScore} pts
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-slate-500">Longest streak</p>
@@ -430,18 +473,7 @@ export default async function DashboardPage() {
                 )}
               </div>
             </div>
-            <div className="mt-4">
-              <p className="text-sm text-slate-500">Previous month winner</p>
-              <p className="text-lg font-bold text-amber-600">
-                {prevMonthWinner ? prevMonthWinner.name : "—"}
-              </p>
-              {prevMonthWinner && (
-                <p className="text-xs text-slate-500">
-                  {format(prevMonthStart, "MMM yyyy")} · {prevMonthScore} pts
-                </p>
-              )}
-            </div>
-            <div className="mt-4">
+            <div>
               <p className="mb-2 text-sm font-medium text-slate-600">Last 7 days</p>
               <WeeklyChart data={last7Days} members={members ?? []} />
             </div>
