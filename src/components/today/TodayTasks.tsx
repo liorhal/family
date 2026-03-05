@@ -20,6 +20,7 @@ import {
 import { MemberAvatar } from "@/components/MemberAvatar";
 import { MemberAvatarPicker } from "@/components/MemberAvatarPicker";
 import { Check, Dumbbell, BookOpen, Home, RotateCcw } from "lucide-react";
+import { Loader } from "@/components/ui/loader";
 
 interface TakenTask {
   id: string;
@@ -83,6 +84,7 @@ export function TodayTasks({
 }: TodayTasksProps) {
   const router = useRouter();
   const [completing, setCompleting] = useState<string | null>(null);
+  const [releasing, setReleasing] = useState<string | null>(null);
   const [assigneeForTask, setAssigneeForTask] = useState<Record<string, string>>({});
   const [sportCompleterForActivity, setSportCompleterForActivity] = useState<Record<string, string>>({});
   const [schoolCompleterForTask, setSchoolCompleterForTask] = useState<Record<string, string>>({});
@@ -122,9 +124,9 @@ export function TodayTasks({
   }
 
   async function handleReleaseTask(taskId: string) {
-    setCompleting(taskId);
+    setReleasing(taskId);
     const res = await releaseTask(taskId);
-    setCompleting(null);
+    setReleasing(null);
     if (res.error) alert(res.error);
     else router.refresh();
   }
@@ -280,19 +282,28 @@ export function TodayTasks({
                     variant="success"
                     size="lg"
                     onClick={() => handleCompleteTask(t.id)}
-                    disabled={completing === t.id}
+                    disabled={completing === t.id || releasing === t.id}
                   >
-                    <Check className="mr-2 h-5 w-5" />
-                    {completing === t.id ? "..." : "Complete"}
+                    {completing === t.id ? (
+                      <>
+                        <Loader size={20} className="mr-2" />
+                        Completing…
+                      </>
+                    ) : (
+                      <>
+                        <Check className="mr-2 h-5 w-5" />
+                        Complete
+                      </>
+                    )}
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={() => handleReleaseTask(t.id)}
-                    disabled={completing === t.id}
+                    disabled={completing === t.id || releasing === t.id}
                     title="Release task"
                   >
-                    <RotateCcw className="h-4 w-4" />
+                    {releasing === t.id ? <Loader size={16} /> : <RotateCcw className="h-4 w-4" />}
                   </Button>
                 </div>
               </motion.div>
@@ -335,8 +346,17 @@ export function TodayTasks({
                     onClick={() => handleTakeAndComplete(t.id)}
                     disabled={completing === t.id || !assigneeForTask[t.id]}
                   >
-                    <Check className="mr-2 h-5 w-5" />
-                    {completing === t.id ? "..." : "Complete"}
+                    {completing === t.id ? (
+                      <>
+                        <Loader size={20} className="mr-2" />
+                        Completing…
+                      </>
+                    ) : (
+                      <>
+                        <Check className="mr-2 h-5 w-5" />
+                        Complete
+                      </>
+                    )}
                   </Button>
                 </div>
               </motion.div>
@@ -390,8 +410,17 @@ export function TodayTasks({
                     onClick={() => handleCompleteSport(a.id)}
                     disabled={completing === a.id || (needsCompleter && !sportCompleterForActivity[a.id])}
                   >
-                    <Check className="mr-2 h-5 w-5" />
-                    {completing === a.id ? "..." : "Complete"}
+                    {completing === a.id ? (
+                      <>
+                        <Loader size={20} className="mr-2" />
+                        Completing…
+                      </>
+                    ) : (
+                      <>
+                        <Check className="mr-2 h-5 w-5" />
+                        Complete
+                      </>
+                    )}
                   </Button>
                 </div>
               </motion.div>
@@ -447,8 +476,17 @@ export function TodayTasks({
                       onClick={() => handleCompleteSchool(t.id)}
                       disabled={completing === t.id || (needsCompleter && !schoolCompleterForTask[t.id])}
                     >
-                      <Check className="mr-2 h-5 w-5" />
-                      {completing === t.id ? "..." : "Complete"}
+                      {completing === t.id ? (
+                        <>
+                          <Loader size={20} className="mr-2" />
+                          Completing…
+                        </>
+                      ) : (
+                        <>
+                          <Check className="mr-2 h-5 w-5" />
+                          Complete
+                        </>
+                      )}
                     </Button>
                   </div>
                 </motion.div>

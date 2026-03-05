@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Pencil } from "lucide-react";
+import { Loader } from "@/components/ui/loader";
 import type { Member } from "@/lib/db/types";
 import type { SchoolTask } from "@/lib/db/types";
 import { getDayName } from "@/lib/utils";
@@ -235,7 +236,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                       disabled={deletingId === t.id}
                       title="Delete task"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {deletingId === t.id ? <Loader size={16} className="text-red-600" /> : <Trash2 className="h-4 w-4" />}
                     </Button>
                     </div>
                   </div>

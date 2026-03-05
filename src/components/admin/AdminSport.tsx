@@ -11,6 +11,7 @@ import type { Member } from "@/lib/db/types";
 import type { SportActivity } from "@/lib/db/types";
 import { getDayName } from "@/lib/utils";
 import { Trash2, Pencil } from "lucide-react";
+import { Loader } from "@/components/ui/loader";
 import { AdminSection } from "./AdminSection";
 import { DayCheckboxes } from "./DayCheckboxes";
 import { FormMemberSelect } from "./FormMemberSelect";
@@ -212,7 +213,7 @@ export function AdminSport({ activities, members }: AdminSportProps) {
                       disabled={deletingId === a.id}
                       title="Delete activity"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {deletingId === a.id ? <Loader size={16} className="text-red-600" /> : <Trash2 className="h-4 w-4" />}
                     </Button>
                   </div>
                 )}

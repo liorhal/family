@@ -21,6 +21,7 @@ import {
 import { MemberAvatar } from "@/components/MemberAvatar";
 import { MemberAvatarPicker } from "@/components/MemberAvatarPicker";
 import { Check, Dumbbell, BookOpen, Home, UserPlus, RotateCcw, Trash2 } from "lucide-react";
+import { Loader } from "@/components/ui/loader";
 
 interface TakenTask {
   id: string;
@@ -82,6 +83,7 @@ export function DashboardTodayActivities({
 }: DashboardTodayActivitiesProps) {
   const router = useRouter();
   const [completing, setCompleting] = useState<string | null>(null);
+  const [releasing, setReleasing] = useState<string | null>(null);
   const [assigneeForTask, setAssigneeForTask] = useState<Record<string, string>>({});
   const [sportCompleterForActivity, setSportCompleterForActivity] = useState<Record<string, string>>({});
   const [schoolCompleterForTask, setSchoolCompleterForTask] = useState<Record<string, string>>({});
@@ -130,9 +132,9 @@ export function DashboardTodayActivities({
   }
 
   async function handleReleaseTask(taskId: string) {
-    setCompleting(taskId);
+    setReleasing(taskId);
     const res = await releaseTask(taskId);
-    setCompleting(null);
+    setReleasing(null);
     if (res.error) alert(res.error);
     else router.refresh();
   }
@@ -283,20 +285,20 @@ export function DashboardTodayActivities({
                 size="icon"
                 className={iconBtn}
                 onClick={() => handleCompleteTask(t.id)}
-                disabled={completing === t.id}
+                disabled={completing === t.id || releasing === t.id}
                 title="Complete"
               >
-                <Check className="h-4 w-4" />
+                {completing === t.id ? <Loader size={16} /> : <Check className="h-4 w-4" />}
               </Button>
               <Button
                 variant="outline"
                 size="icon"
                 className={iconBtn}
                 onClick={() => handleReleaseTask(t.id)}
-                disabled={completing === t.id}
+                disabled={completing === t.id || releasing === t.id}
                 title="Release"
               >
-                <RotateCcw className="h-4 w-4" />
+                {releasing === t.id ? <Loader size={16} /> : <RotateCcw className="h-4 w-4" />}
               </Button>
             </div>
           </motion.div>
@@ -330,7 +332,7 @@ export function DashboardTodayActivities({
               disabled={completing === t.id || !assigneeForTask[t.id]}
               title="Complete"
             >
-              <Check className="h-4 w-4" />
+              {completing === t.id ? <Loader size={16} /> : <Check className="h-4 w-4" />}
             </Button>
             {showRemoveFromToday && (
               <Button
@@ -341,7 +343,7 @@ export function DashboardTodayActivities({
                 disabled={removing === `house-${t.id}`}
                 title="Remove from today"
               >
-                <Trash2 className="h-4 w-4 text-slate-500" />
+                {removing === `house-${t.id}` ? <Loader size={16} className="text-slate-500" /> : <Trash2 className="h-4 w-4 text-slate-500" />}
               </Button>
             )}
           </div>
@@ -405,7 +407,7 @@ export function DashboardTodayActivities({
                 disabled={completing === a.id || (needsCompleter && !sportCompleterForActivity[a.id])}
                 title="Complete"
               >
-                <Check className="h-4 w-4" />
+                {completing === a.id ? <Loader size={16} /> : <Check className="h-4 w-4" />}
               </Button>
               {showRemoveFromToday && (
                 <Button
@@ -416,7 +418,7 @@ export function DashboardTodayActivities({
                   disabled={removing === `sport-${a.id}`}
                   title="Remove from today"
                 >
-                  <Trash2 className="h-4 w-4 text-slate-500" />
+                  {removing === `sport-${a.id}` ? <Loader size={16} className="text-slate-500" /> : <Trash2 className="h-4 w-4 text-slate-500" />}
                 </Button>
               )}
             </div>
@@ -482,7 +484,7 @@ export function DashboardTodayActivities({
                 disabled={completing === t.id || (needsCompleter && !schoolCompleterForTask[t.id])}
                 title="Complete"
               >
-                <Check className="h-4 w-4" />
+                {completing === t.id ? <Loader size={16} /> : <Check className="h-4 w-4" />}
               </Button>
               {showRemoveFromToday && (
                 <Button
@@ -493,7 +495,7 @@ export function DashboardTodayActivities({
                   disabled={removing === `school-${t.id}`}
                   title="Remove from today"
                 >
-                  <Trash2 className="h-4 w-4 text-slate-500" />
+                  {removing === `school-${t.id}` ? <Loader size={16} className="text-slate-500" /> : <Trash2 className="h-4 w-4 text-slate-500" />}
                 </Button>
               )}
             </div>
