@@ -45,6 +45,16 @@ const sourceBadgeVariant: Record<ActivityEntry["source_type"], "house" | "sport"
   fine: "fine",
 };
 
+/** Category border/accent colors for activity cards */
+const sourceBorderColor: Record<ActivityEntry["source_type"], string> = {
+  house: "border-l-green-500",
+  sport: "border-l-orange-500",
+  school: "border-l-purple-500",
+  streak_bonus: "border-l-amber-500",
+  bonus: "border-l-amber-500",
+  fine: "border-l-red-500",
+};
+
 const DAY_OPTIONS = [1, 2, 3, 5, 7, 14, 30] as const;
 
 export function ActivityLog({ entries, members, showResetButton = false, horizontal = false }: ActivityLogProps) {
@@ -93,13 +103,14 @@ export function ActivityLog({ entries, members, showResetButton = false, horizon
           key={entry.id}
           className={
             horizontal
-              ? "flex shrink-0 flex-col w-44 rounded-xl bg-white/90 p-2.5 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:bg-slate-800/90"
-              : "relative ml-9 rounded-xl rounded-bl-none bg-white/90 px-3 py-2 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:bg-slate-800/90"
+              ? `flex shrink-0 flex-col w-44 rounded-xl border-l-4 bg-white/90 p-2.5 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:bg-slate-800/90 ${sourceBorderColor[entry.source_type]}`
+              : `relative ml-9 rounded-xl rounded-bl-none border-l-4 bg-white/90 px-3 py-2 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:bg-slate-800/90 ${sourceBorderColor[entry.source_type]}`
           }
         >
           {horizontal ? (
             <>
               <div className="flex items-center gap-2">
+                <CategoryIcon type={entry.source_type} size="sm" />
                 <MemberAvatar name={entry.member_name} avatarUrl={entry.member_avatar_url} size="sm" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-semibold">{entry.member_name}</p>

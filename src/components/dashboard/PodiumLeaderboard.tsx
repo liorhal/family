@@ -70,13 +70,13 @@ export function PodiumLeaderboard({
     const score = monthlyScores[member.id] ?? 0;
     const trend = getTrend(member.id);
     const medalColor = rank < 3 ? MEDAL_COLORS[rank] : undefined;
-    const sizeClass = size === "lg" ? "h-16 w-16 sm:h-20 sm:w-20" : size === "md" ? "h-14 w-14 sm:h-16 sm:w-16" : "h-12 w-12 sm:h-14 sm:w-14";
+    const sizeClass = size === "lg" ? "h-12 w-12 sm:h-14 sm:w-14" : size === "md" ? "h-11 w-11 sm:h-12 sm:w-12" : "h-10 w-10 sm:h-11 sm:w-11";
     const tooltip = getTooltip(member.id);
 
     return (
       <div
         key={member.id}
-        className="flex shrink-0 flex-col items-center gap-2 rounded-2xl border border-white/60 bg-white/70 px-4 py-3 shadow-md backdrop-blur-sm transition-transform hover:scale-[1.02]"
+        className="flex shrink-0 flex-col items-center gap-1 rounded-xl border border-white/60 bg-white/70 px-2 py-2 shadow-md backdrop-blur-sm sm:gap-1.5 sm:px-3 sm:py-2 sm:rounded-2xl"
       >
         <div
           className={`relative flex ${sizeClass} items-center justify-center rounded-full ${
@@ -99,7 +99,7 @@ export function PodiumLeaderboard({
           />
           {medalColor && (
             <span
-              className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white"
+              className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white sm:h-5 sm:w-5"
               style={{ backgroundColor: medalColor }}
             >
               {rank + 1}
@@ -107,11 +107,11 @@ export function PodiumLeaderboard({
           )}
         </div>
         <div className="flex flex-col items-center gap-0.5">
-          <p className="max-w-[80px] truncate text-center text-sm font-semibold">
+          <p className="max-w-[64px] truncate text-center text-xs font-semibold sm:max-w-[80px] sm:text-sm">
             {member.name}
           </p>
-          <div className="flex items-center gap-1.5">
-            <span className="text-base font-bold text-blue-600">
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-bold text-blue-600 sm:text-base">
               {score} pts
             </span>
             {(member.current_streak ?? 0) > 0 && (
@@ -161,13 +161,13 @@ export function PodiumLeaderboard({
   };
 
   return (
-    <div className="overflow-x-auto pb-2 -mx-1 sm:mx-0">
-      <div className="flex flex-col items-center gap-4">
-        {/* Podium: 2nd (left), 1st (center), 3rd (right) */}
-        <div className="flex min-w-max items-end justify-center gap-2 px-1 sm:gap-4">
+    <div className="overflow-hidden pb-1 sm:pb-2">
+      <div className="flex flex-col items-center gap-2 sm:gap-4">
+        {/* Podium: 2nd (left), 1st (center), 3rd (right) - compact for phone */}
+        <div className="flex w-full max-w-full items-end justify-center gap-1 sm:gap-4">
           {topThree.map((member, i) => {
             const rank = i === 0 ? 1 : i === 1 ? 0 : 2; // 2nd, 1st, 3rd
-            const stepHeight = i === 0 ? "h-16 sm:h-20" : i === 1 ? "h-24 sm:h-28" : "h-12 sm:h-16";
+            const stepHeight = i === 0 ? "h-10 sm:h-16" : i === 1 ? "h-14 sm:h-24" : "h-8 sm:h-12";
             return (
               <div
                 key={member.id}
@@ -175,7 +175,7 @@ export function PodiumLeaderboard({
               >
                 {renderMember(member, rank, i === 1 ? "lg" : i === 0 ? "md" : "sm")}
                 <div
-                  className={`mt-2 flex w-full min-w-[72px] items-end justify-center rounded-t-lg border border-white/80 px-2 backdrop-blur-sm sm:min-w-[88px] ${stepHeight}`}
+                  className={`mt-1 flex w-20 min-w-[56px] items-end justify-center rounded-t-lg border border-white/80 px-1 backdrop-blur-sm sm:min-w-[72px] sm:w-24 sm:px-2 sm:min-w-[88px] ${stepHeight}`}
                   style={
                     rank < 3
                       ? { backgroundColor: `${MEDAL_COLORS[rank]}40`, borderColor: `${MEDAL_COLORS[rank]}99` }
@@ -190,7 +190,7 @@ export function PodiumLeaderboard({
         </div>
         {/* Rest of members in a row below */}
         {rest.length > 0 && (
-          <div className="flex min-w-max flex-wrap justify-center gap-3 px-1 sm:min-w-0 sm:gap-4">
+          <div className="flex w-full flex-wrap justify-center gap-2 sm:gap-4">
             {rest.map((member, i) => renderMember(member, i + 3, "sm"))}
           </div>
         )}
