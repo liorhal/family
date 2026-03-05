@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Home, Dumbbell, BookOpen } from "lucide-react";
+import { getCategoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
 
 export type LuckyActivity =
@@ -90,9 +90,7 @@ export function FeelingLuckyButton({ activities, className }: FeelingLuckyButton
             <div className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Suggested activity</p>
               <div className="mt-2 flex items-center gap-2">
-                {suggestion.type === "house" && <Home className="h-5 w-5 shrink-0 text-green-600" />}
-                {suggestion.type === "sport" && <Dumbbell className="h-5 w-5 shrink-0 text-purple-600" />}
-                {suggestion.type === "school" && <BookOpen className="h-5 w-5 shrink-0 text-blue-600" />}
+                <span className="text-2xl">{getCategoryIcon(suggestion.type)}</span>
                 <span className="font-medium">{suggestion.title}</span>
                 <Badge
                   variant={suggestion.type === "house" ? "house" : suggestion.type === "sport" ? "sport" : "school"}

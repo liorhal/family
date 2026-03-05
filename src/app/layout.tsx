@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
+import { Lexend } from "next/font/google";
 import "./globals.css";
 import { debugLog } from "@/lib/debug-log";
+
+const lexend = Lexend({
+  subsets: ["latin"],
+  variable: "--font-lexend",
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: {
@@ -19,8 +26,8 @@ export default function RootLayout({
   debugLog("layout.tsx", "root_layout_render", { hypothesisId: "H0" });
   // #endregion
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
+    <html lang="en" className={lexend.variable}>
+      <body className="min-h-screen font-sans antialiased">
         {children}
       </body>
     </html>

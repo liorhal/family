@@ -29,8 +29,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivityLog } from "@/components/dashboard/ActivityLog";
+import { CommunityJar } from "@/components/dashboard/CommunityJar";
 import { DashboardTodayActivities } from "@/components/dashboard/DashboardTodayActivities";
-import { Leaderboard } from "@/components/dashboard/Leaderboard";
+import { PodiumLeaderboard } from "@/components/dashboard/PodiumLeaderboard";
 import { RealtimeLeaderboard } from "@/components/dashboard/RealtimeLeaderboard";
 import { WeeklyChart } from "@/components/dashboard/WeeklyChart";
 import { Flame, Trophy, Calendar } from "lucide-react";
@@ -375,9 +376,29 @@ export default async function DashboardPage() {
     };
   });
 
+  const totalMonthlyScore = Object.values(monthlyByMember).reduce((sum, n) => sum + n, 0);
+
   return (
-    <div className="min-w-0 space-y-8">
+    <div className="min-w-0 space-y-6">
       <RealtimeLeaderboard />
+
+      {/* Vibe Header: Podium + Jar - sticky on mobile */}
+      <div className="sticky top-[5rem] z-40 -mx-4 space-y-4 px-4 sm:top-20 sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:px-0">
+        <div className="rounded-2xl border border-white/60 bg-white/70 p-4 shadow-lg backdrop-blur-xl sm:p-6">
+          <h2 className="mb-3 text-center text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Leaderboard
+          </h2>
+          <PodiumLeaderboard
+            members={membersWithStreak}
+            monthlyScores={monthlyByMember}
+            prevMonthScores={prevMonthByMember}
+            currentMonthDaysElapsed={getDate(now)}
+            prevMonthDaysTotal={getDaysInMonth(prevMonthStart)}
+          />
+        </div>
+        <CommunityJar currentPoints={totalMonthlyScore} />
+      </div>
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="min-w-0 truncate text-2xl font-bold tracking-tight sm:text-3xl">
           {family?.name ? `${family.name} Family Dashboard` : "Family Dashboard"}
@@ -393,23 +414,6 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-amber-500" />
-              Leaderboard
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Leaderboard
-              members={membersWithStreak}
-              monthlyScores={monthlyByMember}
-              prevMonthScores={prevMonthByMember}
-              currentMonthDaysElapsed={getDate(now)}
-              prevMonthDaysTotal={getDaysInMonth(prevMonthStart)}
-            />
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>

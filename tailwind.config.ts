@@ -9,7 +9,17 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+  		fontFamily: {
+  			sans: ["var(--font-lexend)", "Inter", "system-ui", "sans-serif"],
+  		},
   		colors: {
+  			bento: {
+  				mint: "#a7f3d0",
+  				peach: "#fecdd3",
+  				lavender: "#e9d5ff",
+  				sky: "#bae6fd",
+  				lemon: "#fef08a",
+  			},
   			streak: {
   				DEFAULT: '#f97316',
   				light: '#fdba74'

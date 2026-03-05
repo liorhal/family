@@ -7,13 +7,20 @@ import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "@/components/MemberAvatar";
 import { Home, Calendar, Settings, LogOut, Award } from "lucide-react";
 
+interface FamilyMember {
+  id: string;
+  name: string;
+  avatar_url?: string | null;
+}
+
 interface HeaderProps {
   memberName?: string;
   memberRole?: string;
   avatarUrl?: string | null;
+  familyMembers?: FamilyMember[];
 }
 
-export function Header({ memberName, memberRole, avatarUrl }: HeaderProps) {
+export function Header({ memberName, memberRole, avatarUrl, familyMembers = [] }: HeaderProps) {
   const pathname = usePathname();
 
   async function signOut() {
@@ -30,7 +37,7 @@ export function Header({ memberName, memberRole, avatarUrl }: HeaderProps) {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 border-b border-white/20 bg-white/70 shadow-sm backdrop-blur-xl">
       <div className="mx-auto flex h-16 min-w-0 max-w-6xl items-center justify-between gap-2 overflow-hidden px-4 sm:h-20 sm:px-6">
         <nav className="flex min-w-0 shrink-0 items-center gap-1 overflow-x-auto sm:gap-2 [&::-webkit-scrollbar]:hidden">
           {nav.map(({ href, label, icon: Icon }) => (
@@ -47,12 +54,16 @@ export function Header({ memberName, memberRole, avatarUrl }: HeaderProps) {
           ))}
         </nav>
         <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-          <span className="hidden text-sm font-medium text-slate-600 sm:inline">{memberName}</span>
-          <MemberAvatar
-            name={memberName ?? "?"}
-            avatarUrl={avatarUrl}
-            size="md"
-          />
+          <div className="flex items-center -space-x-3">
+            {familyMembers.slice(0, 6).map((m) => (
+              <div key={m.id} className="ring-2 ring-white rounded-full shrink-0" title={m.name}>
+                <MemberAvatar name={m.name} avatarUrl={m.avatar_url} size="sm" />
+              </div>
+            ))}
+          </div>
+          {familyMembers.length === 0 && (
+            <MemberAvatar name={memberName ?? "?"} avatarUrl={avatarUrl} size="md" />
+          )}
           <Button
             variant="ghost"
             size="icon"

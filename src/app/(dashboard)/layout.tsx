@@ -40,13 +40,19 @@ export default async function DashboardLayout({
     redirect("/onboarding");
   }
 
+  const { data: familyMembers } = await supabase
+    .from("members")
+    .select("id, name, avatar_url")
+    .eq("family_id", member.family_id);
+
   debugLog("layout.tsx", "layout_render", { hypothesisId: "H2" });
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-amber-50/80 via-sky-100/60 to-amber-100/50 bg-[length:200%_200%] [background-position:0%_50%] supports-[backdrop-filter]:bg-white/40">
       <Header
         memberName={member.name}
         memberRole={member.role}
         avatarUrl={member.avatar_url}
+        familyMembers={familyMembers ?? []}
       />
       <main className="mx-auto min-w-0 max-w-6xl overflow-x-hidden px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         {children}

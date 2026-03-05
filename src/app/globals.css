@@ -6,6 +6,7 @@
   body {
     color: hsl(var(--foreground));
     background: hsl(var(--background));
+    line-height: 1.6;
   }
   :root {
 

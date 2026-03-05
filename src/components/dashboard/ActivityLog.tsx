@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { RotateCcw, Filter } from "lucide-react";
+import { CategoryIcon } from "@/lib/category-icons";
 
 export interface ActivityEntry {
   id: string;
@@ -109,34 +110,33 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
         />
       </div>
 
-      <ul className="space-y-2">
+      <ul className="space-y-3">
         {displayedEntries.map((entry) => (
           <li
             key={entry.id}
-            className="flex items-center gap-3 rounded-lg bg-slate-50 p-2 dark:bg-slate-800/50"
+            className="relative ml-10 rounded-2xl rounded-bl-none bg-white/90 p-4 shadow-lg shadow-slate-200/40 backdrop-blur-sm dark:bg-slate-800/90"
           >
-            <MemberAvatar
-              name={entry.member_name}
-              avatarUrl={entry.member_avatar_url}
-              size="sm"
-            />
+            <div className="absolute -left-10 top-2">
+              <MemberAvatar
+                name={entry.member_name}
+                avatarUrl={entry.member_avatar_url}
+                size="sm"
+              />
+            </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm">
-                <span className="font-medium">{entry.member_name}</span>
-                {" · "}
-                <span className="text-slate-700 dark:text-slate-300">{entry.title}</span>
-              </p>
-              <p className="text-xs text-slate-500">
+              <div className="flex items-center gap-2">
+                <CategoryIcon type={entry.source_type} size="sm" />
+                <span className="font-semibold">{entry.member_name}</span>
+                <span className={`ml-auto shrink-0 text-sm font-bold ${entry.score_delta >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  {entry.score_delta >= 0 ? "+" : ""}{entry.score_delta}
+                </span>
+              </div>
+              <p className="mt-1 text-slate-700 dark:text-slate-300">{entry.title}</p>
+              <p className="mt-1 text-xs text-slate-500">
                 {format(new Date(entry.created_at), "EEE MMM d · h:mm a")}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Badge variant={sourceBadgeVariant[entry.source_type]} className="text-xs">
-                {entry.source_type === "house" ? "House" : entry.source_type === "sport" ? "Sport" : entry.source_type === "school" ? "School" : entry.source_type === "bonus" ? "Bonus" : entry.source_type === "fine" ? "Fine" : "Bonus"}
-              </Badge>
-              <span className={`text-sm font-medium ${entry.score_delta >= 0 ? "text-green-600" : "text-red-600"}`}>
-                {entry.score_delta >= 0 ? "+" : ""}{entry.score_delta}
-              </span>
+            <div className="mt-2 flex items-center justify-end gap-1">
               {showResetButton && entry.source_type !== "streak_bonus" && (
                 <Button
                   variant="ghost"
