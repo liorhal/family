@@ -12,13 +12,11 @@ export function CommunityJar({ currentPoints }: CommunityJarProps) {
   const coinCount = Math.min(12, Math.floor((currentPoints / FAMILY_GOAL) * 12));
 
   return (
-    <div className="rounded-2xl border border-amber-200/60 bg-amber-50/80 p-6 shadow-lg backdrop-blur-sm">
-      <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-center text-sm font-medium text-amber-800/90">
-            Community Jar
-          </p>
-          <div className="relative h-32 w-28 overflow-hidden rounded-2xl border-2 border-amber-300/70 bg-amber-100/50 shadow-inner sm:h-40 sm:w-36">
+    <div className="rounded-2xl border border-amber-200/60 bg-amber-50/80 px-4 py-3 shadow-lg backdrop-blur-sm sm:px-5 sm:py-4">
+      <div className="flex items-center gap-4">
+        <div className="flex shrink-0 flex-col items-center gap-1">
+          <p className="text-xs font-medium text-amber-800/90">Community Jar</p>
+          <div className="relative h-20 w-16 overflow-hidden rounded-xl border-2 border-amber-300/70 bg-amber-100/50 shadow-inner sm:h-24 sm:w-20">
             <div
               className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-amber-400/90 to-amber-300/70 transition-all duration-500"
               style={{ height: `${progress}%` }}
@@ -36,14 +34,14 @@ export function CommunityJar({ currentPoints }: CommunityJarProps) {
             </div>
           </div>
         </div>
-        <div className="flex flex-1 flex-col justify-center gap-1 text-center sm:text-left">
-          <p className="text-lg font-bold text-amber-900">
+        <div className="min-w-0 flex-1">
+          <p className="text-base font-bold text-amber-900 sm:text-lg">
             {currentPoints.toLocaleString()} / {FAMILY_GOAL.toLocaleString()} pts
           </p>
-          <p className="text-sm font-medium text-amber-700">
+          <p className="text-xs font-medium text-amber-700 sm:text-sm">
             {MILESTONE_LABEL}
           </p>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-amber-200/60">
+          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-amber-200/60">
             <div
               className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500"
               style={{ width: `${progress}%` }}

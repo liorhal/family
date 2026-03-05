@@ -86,8 +86,8 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-1.5">
         <select
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
@@ -110,13 +110,13 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
         />
       </div>
 
-      <ul className="space-y-3">
+      <ul className="space-y-2">
         {displayedEntries.map((entry) => (
           <li
             key={entry.id}
-            className="relative ml-10 rounded-2xl rounded-bl-none bg-white/90 p-4 shadow-lg shadow-slate-200/40 backdrop-blur-sm dark:bg-slate-800/90"
+            className="relative ml-9 rounded-xl rounded-bl-none bg-white/90 px-3 py-2 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:bg-slate-800/90"
           >
-            <div className="absolute -left-10 top-2">
+            <div className="absolute -left-9 top-1.5">
               <MemberAvatar
                 name={entry.member_name}
                 avatarUrl={entry.member_avatar_url}
@@ -126,17 +126,17 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <CategoryIcon type={entry.source_type} size="sm" />
-                <span className="font-semibold">{entry.member_name}</span>
-                <span className={`ml-auto shrink-0 text-sm font-bold ${entry.score_delta >= 0 ? "text-green-600" : "text-red-600"}`}>
+                <span className="text-sm font-semibold">{entry.member_name}</span>
+                <span className={`ml-auto shrink-0 text-xs font-bold ${entry.score_delta >= 0 ? "text-green-600" : "text-red-600"}`}>
                   {entry.score_delta >= 0 ? "+" : ""}{entry.score_delta}
                 </span>
               </div>
-              <p className="mt-1 text-slate-700 dark:text-slate-300">{entry.title}</p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-0.5 line-clamp-1 text-xs text-slate-700 dark:text-slate-300">{entry.title}</p>
+              <p className="text-[10px] text-slate-500">
                 {format(new Date(entry.created_at), "EEE MMM d · h:mm a")}
               </p>
             </div>
-            <div className="mt-2 flex items-center justify-end gap-1">
+            <div className="mt-1 flex items-center justify-end gap-0.5">
               {showResetButton && entry.source_type !== "streak_bonus" && (
                 <Button
                   variant="ghost"

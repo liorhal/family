@@ -382,23 +382,7 @@ export default async function DashboardPage() {
     <div className="min-w-0 space-y-6">
       <RealtimeLeaderboard />
 
-      {/* Vibe Header: Podium + Jar - sticky on mobile */}
-      <div className="sticky top-[5rem] z-40 -mx-4 space-y-4 px-4 sm:top-20 sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:px-0">
-        <div className="rounded-2xl border border-white/60 bg-white/70 p-4 shadow-lg backdrop-blur-xl sm:p-6">
-          <h2 className="mb-3 text-center text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Leaderboard
-          </h2>
-          <PodiumLeaderboard
-            members={membersWithStreak}
-            monthlyScores={monthlyByMember}
-            prevMonthScores={prevMonthByMember}
-            currentMonthDaysElapsed={getDate(now)}
-            prevMonthDaysTotal={getDaysInMonth(prevMonthStart)}
-          />
-        </div>
-        <CommunityJar currentPoints={totalMonthlyScore} />
-      </div>
-
+      {/* Page header + Feeling Lucky - above leaderboard */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="min-w-0 truncate text-2xl font-bold tracking-tight sm:text-3xl">
           {family?.name ? `${family.name} Family Dashboard` : "Family Dashboard"}
@@ -413,87 +397,83 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
+      {/* Leaderboard + Statistics row - sticky on mobile */}
+      <div className="sticky top-[5rem] z-40 -mx-4 space-y-4 px-4 sm:top-20 sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:px-0">
+        <div className="rounded-2xl border border-white/60 bg-white/70 p-4 shadow-lg backdrop-blur-xl sm:p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+            <div className="shrink-0 lg:w-1/2">
+              <h2 className="mb-2 text-center text-sm font-semibold uppercase tracking-wide text-slate-500 lg:text-left">
+                Leaderboard
+              </h2>
+              <PodiumLeaderboard
+                members={membersWithStreak}
+                monthlyScores={monthlyByMember}
+                prevMonthScores={prevMonthByMember}
+                currentMonthDaysElapsed={getDate(now)}
+                prevMonthDaysTotal={getDaysInMonth(prevMonthStart)}
+              />
+            </div>
+            <div className="flex-1 lg:border-l lg:border-slate-200/60 lg:pl-6">
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Statistics</h2>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs text-slate-500">Monthly score</p>
+                  <p className="text-lg font-bold text-blue-600">{totalMonthlyScore} pts</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Days left</p>
+                  <p className="text-lg font-bold text-blue-600">{daysToEndOfMonth} day{daysToEndOfMonth !== 1 ? "s" : ""}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Best day</p>
+                  <p className="text-lg font-bold text-emerald-600">{bestDay ? `${bestDay.score} pts` : "—"}</p>
+                  {bestDay && <p className="text-xs text-slate-500">{format(new Date(bestDay.date), "EEE MMM d")}</p>}
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Best month</p>
+                  <p className="text-lg font-bold text-emerald-600">{bestMonth ? `${bestMonth.score} pts` : "—"}</p>
+                  {bestMonth && <p className="text-xs text-slate-500">{format(new Date(bestMonth.month + "-01"), "MMM yyyy")}</p>}
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Prev month winner</p>
+                  <p className="text-lg font-bold text-amber-600">{prevMonthWinner ? prevMonthWinner.name : "—"}</p>
+                  {prevMonthWinner && <p className="text-xs text-slate-500">{format(prevMonthStart, "MMM yyyy")} · {prevMonthScore} pts</p>}
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Longest streak</p>
+                  <p className="text-lg font-bold text-orange-600">{longestStreakMember ? `${longestStreakMember.longest_streak} days` : "0 days"}</p>
+                  {longestStreakMember && <p className="text-xs text-slate-500">{longestStreakMember.name}</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <CommunityJar currentPoints={totalMonthlyScore} />
+      </div>
+
+      {/* Chart + Last Activities */}
+      <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Flame className="h-5 w-5 text-orange-500" />
-              Statistics
+          <CardHeader className="p-4 pb-1">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Flame className="h-4 w-4 text-orange-500" />
+              Last 7 days
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-slate-500">Monthly score</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {Object.values(monthlyByMember).reduce((sum, n) => sum + n, 0)} pts
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Days left</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {daysToEndOfMonth} day{daysToEndOfMonth !== 1 ? "s" : ""}
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-slate-500">Best day</p>
-                <p className="text-2xl font-bold text-emerald-600">
-                  {bestDay ? `${bestDay.score} pts` : "—"}
-                </p>
-                {bestDay && (
-                  <p className="text-xs text-slate-500">{format(new Date(bestDay.date), "EEE MMM d")}</p>
-                )}
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Best month</p>
-                <p className="text-2xl font-bold text-emerald-600">
-                  {bestMonth ? `${bestMonth.score} pts` : "—"}
-                </p>
-                {bestMonth && (
-                  <p className="text-xs text-slate-500">{format(new Date(bestMonth.month + "-01"), "MMM yyyy")}</p>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-slate-500">Prev month winner</p>
-                <p className="text-2xl font-bold text-amber-600">
-                  {prevMonthWinner ? prevMonthWinner.name : "—"}
-                </p>
-                {prevMonthWinner && (
-                  <p className="text-xs text-slate-500">
-                    {format(prevMonthStart, "MMM yyyy")} · {prevMonthScore} pts
-                  </p>
-                )}
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Longest streak</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {longestStreakMember ? `${longestStreakMember.longest_streak} days` : "0 days"}
-                </p>
-                {longestStreakMember && (
-                  <p className="text-xs text-slate-500">{longestStreakMember.name}</p>
-                )}
-              </div>
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-medium text-slate-600">Last 7 days</p>
-              <WeeklyChart data={last7Days} members={members ?? []} />
-            </div>
+          <CardContent className="p-4 pt-0">
+            <WeeklyChart data={last7Days} members={members ?? []} />
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-blue-500" />
+          <CardHeader className="p-4 pb-1">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Calendar className="h-4 w-4 text-blue-500" />
               Last Activities
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-0 pb-4">
             <ActivityLog
               entries={activityEntries}
               members={members ?? []}
