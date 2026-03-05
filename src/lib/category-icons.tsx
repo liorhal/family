@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export type CategoryType = "house" | "sport" | "school" | "custom" | "bonus" | "fine" | "streak_bonus";
+export type CategoryType = "house" | "sport" | "school" | "custom" | "bonus" | "fine" | "streak_bonus" | "birthday_bonus";
 
 const CATEGORY_CONFIG: Record<
   CategoryType,
@@ -13,6 +13,7 @@ const CATEGORY_CONFIG: Record<
   bonus: { emoji: "✨", circleColor: "bg-amber-500/20 ring-amber-500/40", label: "Bonus" },
   fine: { emoji: "⚠️", circleColor: "bg-red-500/20 ring-red-500/40", label: "Fine" },
   streak_bonus: { emoji: "🔥", circleColor: "bg-orange-500/20 ring-orange-500/40", label: "Streak" },
+  birthday_bonus: { emoji: "🎂", circleColor: "bg-pink-500/20 ring-pink-500/40", label: "Birthday" },
 };
 
 export function CategoryIcon({

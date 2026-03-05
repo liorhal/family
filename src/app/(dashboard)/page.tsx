@@ -29,6 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 import { ActivityLog } from "@/components/dashboard/ActivityLog";
 import { CommunityJar } from "@/components/dashboard/CommunityJar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardTodayActivities } from "@/components/dashboard/DashboardTodayActivities";
 import { PodiumLeaderboard } from "@/components/dashboard/PodiumLeaderboard";
 import { RealtimeLeaderboard } from "@/components/dashboard/RealtimeLeaderboard";
@@ -65,7 +66,7 @@ export default async function DashboardPage() {
   // #endregion
   const { data: family } = await supabase
     .from("families")
-    .select("name, show_reset_button, show_remove_from_today, jar_target, jar_prize")
+    .select("name, show_reset_button, show_remove_from_today, jar_target, jar_prize, dashboard_header")
     .eq("id", familyId)
     .single();
 
@@ -167,6 +168,39 @@ export default async function DashboardPage() {
   }
 
   const prevMonthScore = prevMonthWinnerId ? prevMonthByMember[prevMonthWinnerId] ?? 0 : 0;
+
+  // Birthday: members with birthday today + award 10pt bonus if not yet given
+  const todayForBirthday = new Date();
+  const todayMonth = todayForBirthday.getMonth() + 1;
+  const todayDay = todayForBirthday.getDate();
+  const birthdayMembersToday = (members ?? []).filter((m) => {
+    const b = (m as { birthday?: string | null }).birthday;
+    if (!b || typeof b !== "string") return false;
+    const [y, mo, d] = b.split("-").map(Number);
+    return mo === todayMonth && d === todayDay;
+  });
+  if (birthdayMembersToday.length > 0) {
+    const todayStart = new Date(todayForBirthday.getFullYear(), todayForBirthday.getMonth(), todayForBirthday.getDate()).toISOString();
+    const todayEnd = new Date(todayForBirthday.getFullYear(), todayForBirthday.getMonth(), todayForBirthday.getDate() + 1).toISOString();
+    const { data: existingBonuses } = await supabase
+      .from("scores_log")
+      .select("member_id")
+      .eq("source_type", "birthday_bonus")
+      .gte("created_at", todayStart)
+      .lt("created_at", todayEnd);
+    const alreadyAwarded = new Set((existingBonuses ?? []).map((r) => r.member_id));
+    for (const m of birthdayMembersToday) {
+      if (!alreadyAwarded.has(m.id)) {
+        await supabase.from("scores_log").insert({
+          member_id: m.id,
+          source_type: "birthday_bonus",
+          source_id: null,
+          score_delta: 10,
+          description: `Happy Birthday ${m.name}! 🎂`,
+        });
+      }
+    }
+  }
 
   // #region agent log
   debugLog("dashboard/page.tsx", "dashboard_data_ready", { hypothesisId: "H4", membersCount: (members ?? []).length });
@@ -339,20 +373,22 @@ export default async function DashboardPage() {
     const title =
       s.source_type === "streak_bonus"
         ? "Streak bonus"
-        : s.source_type === "bonus"
-          ? (s as { description?: string | null }).description || "Bonus"
-          : s.source_type === "fine"
-            ? (s as { description?: string | null }).description || "Fine"
-            : s.source_id
-              ? titleMap[`${s.source_type}:${s.source_id}`] ?? "Unknown"
-              : "Unknown";
+        : s.source_type === "birthday_bonus"
+          ? (s as { description?: string | null }).description || "Birthday bonus 🎂"
+          : s.source_type === "bonus"
+            ? (s as { description?: string | null }).description || "Bonus"
+            : s.source_type === "fine"
+              ? (s as { description?: string | null }).description || "Fine"
+              : s.source_id
+                ? titleMap[`${s.source_type}:${s.source_id}`] ?? "Unknown"
+                : "Unknown";
     const m = members?.find((x) => x.id === s.member_id);
     return {
       id: s.id,
       member_id: s.member_id,
       member_name: m?.name ?? "—",
       member_avatar_url: m?.avatar_url ?? null,
-      source_type: s.source_type as "house" | "sport" | "school" | "streak_bonus" | "bonus" | "fine",
+      source_type: s.source_type as "house" | "sport" | "school" | "streak_bonus" | "bonus" | "fine" | "birthday_bonus",
       source_id: s.source_id,
       title,
       score_delta: s.source_type === "fine" ? -s.score_delta : s.score_delta,
@@ -368,9 +404,16 @@ export default async function DashboardPage() {
 
       {/* Page header + Feeling Lucky - above leaderboard */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="min-w-0 truncate text-2xl font-bold tracking-tight sm:text-3xl">
-          {family?.name ? `${family.name} Family Dashboard` : "Family Dashboard"}
-        </h1>
+        <DashboardHeader
+          defaultHeader={
+            family?.dashboard_header && String(family.dashboard_header).trim()
+              ? String(family.dashboard_header).trim()
+              : family?.name
+                ? `${family.name} Family Dashboard`
+                : "Family Dashboard"
+          }
+          birthdayMembers={birthdayMembersToday.map((m) => ({ name: m.name }))}
+        />
         <FeelingLuckyButton
           className="w-full shrink-0 sm:w-auto"
           activities={[

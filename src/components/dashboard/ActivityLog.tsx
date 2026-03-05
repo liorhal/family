@@ -16,7 +16,7 @@ export interface ActivityEntry {
   member_id: string;
   member_name: string;
   member_avatar_url: string | null;
-  source_type: "house" | "sport" | "school" | "streak_bonus" | "bonus" | "fine";
+  source_type: "house" | "sport" | "school" | "streak_bonus" | "bonus" | "fine" | "birthday_bonus";
   source_id: string | null;
   title: string;
   score_delta: number;
@@ -43,6 +43,7 @@ const sourceBadgeVariant: Record<ActivityEntry["source_type"], "house" | "sport"
   streak_bonus: "streak",
   bonus: "streak",
   fine: "fine",
+  birthday_bonus: "streak",
 };
 
 /** Category border/accent colors for activity cards */
@@ -53,6 +54,7 @@ const sourceBorderColor: Record<ActivityEntry["source_type"], string> = {
   streak_bonus: "border-l-amber-500",
   bonus: "border-l-amber-500",
   fine: "border-l-red-500",
+  birthday_bonus: "border-l-pink-500",
 };
 
 const DAY_OPTIONS = [1, 2, 3, 5, 7, 14, 30] as const;
@@ -78,7 +80,7 @@ export function ActivityLog({ entries, members, showResetButton = false, horizon
   const hasMore = filteredEntries.length > INITIAL_ROWS;
 
   async function handleReset(entry: ActivityEntry) {
-    if (entry.source_type === "streak_bonus") return;
+    if (entry.source_type === "streak_bonus" || entry.source_type === "birthday_bonus") return;
     const msg = ["bonus", "fine"].includes(entry.source_type)
       ? `Remove this ${entry.source_type} entry?`
       : `Reset "${entry.title}"? This will undo the completion.`;
@@ -121,7 +123,7 @@ export function ActivityLog({ entries, members, showResetButton = false, horizon
               </div>
               <p className="mt-1 line-clamp-2 text-xs text-slate-700 dark:text-slate-300">{entry.title}</p>
               <p className="mt-0.5 text-[10px] text-slate-500">{format(new Date(entry.created_at), "EEE MMM d")}</p>
-              {showResetButton && entry.source_type !== "streak_bonus" && (
+              {showResetButton && entry.source_type !== "streak_bonus" && entry.source_type !== "birthday_bonus" && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -151,7 +153,7 @@ export function ActivityLog({ entries, members, showResetButton = false, horizon
                 <p className="text-[10px] text-slate-500">{format(new Date(entry.created_at), "EEE MMM d · h:mm a")}</p>
               </div>
               <div className="mt-1 flex items-center justify-end gap-0.5">
-                {showResetButton && entry.source_type !== "streak_bonus" && (
+                {showResetButton && entry.source_type !== "streak_bonus" && entry.source_type !== "birthday_bonus" && (
                   <Button
                     variant="ghost"
                     size="icon"

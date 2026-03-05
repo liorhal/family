@@ -814,12 +814,15 @@ export async function createMember(formData: FormData) {
   const name = formData.get("name") as string;
   const role = (formData.get("role") as "admin" | "kid") || "kid";
   const avatar_url = (formData.get("avatar_url") as string) || null;
+  const birthdayRaw = (formData.get("birthday") as string)?.trim() || "";
+  const birthday = birthdayRaw && /^\d{4}-\d{2}-\d{2}$/.test(birthdayRaw) ? birthdayRaw : null;
 
   const { error } = await supabase.from("members").insert({
     family_id: familyId,
     name,
     role,
     avatar_url: avatar_url || null,
+    birthday,
   });
 
   if (error) return { error: error.message };
@@ -840,10 +843,12 @@ export async function updateMember(memberId: string, formData: FormData) {
   const name = formData.get("name") as string;
   const role = (formData.get("role") as "admin" | "kid") || "kid";
   const avatar_url = (formData.get("avatar_url") as string) || null;
+  const birthdayRaw = (formData.get("birthday") as string)?.trim() || "";
+  const birthday = birthdayRaw && /^\d{4}-\d{2}-\d{2}$/.test(birthdayRaw) ? birthdayRaw : null;
 
   const { error } = await supabase
     .from("members")
-    .update({ name, role, avatar_url: avatar_url || null })
+    .update({ name, role, avatar_url: avatar_url || null, birthday })
     .eq("id", memberId)
     .eq("family_id", familyId);
 
@@ -947,10 +952,11 @@ export async function updateFamilySettings(formData: FormData) {
   const show_remove_from_today = formData.get("show_remove_from_today") === "true";
   const jar_target = Math.max(1, parseInt(String(formData.get("jar_target")), 10) || 1500);
   const jar_prize = (formData.get("jar_prize") as string)?.trim() || "1,500 points = Family Movie Night 🍿";
+  const dashboard_header = (formData.get("dashboard_header") as string)?.trim() || null;
 
   const { error } = await supabase
     .from("families")
-    .update({ show_reset_button, show_remove_from_today, jar_target, jar_prize })
+    .update({ show_reset_button, show_remove_from_today, jar_target, jar_prize, dashboard_header })
     .eq("id", familyId);
 
   if (error) return { error: error.message };

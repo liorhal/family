@@ -2,7 +2,7 @@ export type MemberRole = "admin" | "kid";
 export type TaskStatus = "open" | "taken" | "completed" | "expired";
 export type SportType = "weekly" | "extra";
 export type SchoolTaskType = "homework" | "exam" | "project" | "research";
-export type ScoreSourceType = "house" | "sport" | "school" | "streak_bonus" | "bonus" | "fine";
+export type ScoreSourceType = "house" | "sport" | "school" | "streak_bonus" | "bonus" | "fine" | "birthday_bonus";
 
 export interface Family {
   id: string;
@@ -18,6 +18,7 @@ export interface Member {
   name: string;
   role: MemberRole;
   avatar_url: string | null;
+  birthday: string | null;
   created_at: string;
 }
 

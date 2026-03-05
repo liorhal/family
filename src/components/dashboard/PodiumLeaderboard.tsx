@@ -73,10 +73,12 @@ export function PodiumLeaderboard({
     const sizeClass = size === "lg" ? "h-12 w-12 sm:h-14 sm:w-14" : size === "md" ? "h-11 w-11 sm:h-12 sm:w-12" : "h-10 w-10 sm:h-11 sm:w-11";
     const tooltip = getTooltip(member.id);
 
+    const isTooltipOpen = openTooltipMemberId === member.id;
+
     return (
       <div
         key={member.id}
-        className="flex shrink-0 flex-col items-center gap-1 rounded-xl border border-white/60 bg-white/70 px-2 py-2 shadow-md backdrop-blur-sm sm:gap-1.5 sm:px-3 sm:py-2 sm:rounded-2xl"
+        className={`relative flex shrink-0 flex-col items-center gap-1 rounded-xl border border-white/60 bg-white/70 px-2 py-2 shadow-md backdrop-blur-sm sm:gap-1.5 sm:px-3 sm:py-2 sm:rounded-2xl ${isTooltipOpen ? "z-[100] isolate" : ""}`}
       >
         <div
           className={`relative flex ${sizeClass} items-center justify-center rounded-full ${
@@ -146,7 +148,7 @@ export function PodiumLeaderboard({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 4 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute bottom-full left-1/2 z-50 mb-1 -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-lg dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      className="absolute bottom-full left-1/2 z-[101] mb-1 -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     >
                       {tooltip}
                     </motion.div>
@@ -161,7 +163,7 @@ export function PodiumLeaderboard({
   };
 
   return (
-    <div className="overflow-hidden pb-1 sm:pb-2">
+    <div className="overflow-x-hidden pb-1 sm:pb-2">
       <div className="flex flex-col items-center gap-2 sm:gap-4">
         {/* Podium: 2nd (left), 1st (center), 3rd (right) - compact for phone */}
         <div className="flex w-full max-w-full items-end justify-center gap-1 sm:gap-4">

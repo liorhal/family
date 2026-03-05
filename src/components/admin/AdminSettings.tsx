@@ -13,15 +13,17 @@ interface AdminSettingsProps {
   showRemoveFromToday?: boolean;
   jarTarget?: number;
   jarPrize?: string;
+  dashboardHeader?: string;
 }
 
-export function AdminSettings({ showResetButton, showRemoveFromToday: initialRemove = false, jarTarget = 1500, jarPrize = "1,500 points = Family Movie Night 🍿" }: AdminSettingsProps) {
+export function AdminSettings({ showResetButton, showRemoveFromToday: initialRemove = false, jarTarget = 1500, jarPrize = "1,500 points = Family Movie Night 🍿", dashboardHeader = "" }: AdminSettingsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showReset, setShowReset] = useState(showResetButton);
   const [showRemove, setShowRemove] = useState(initialRemove);
   const [target, setTarget] = useState(String(jarTarget));
   const [prize, setPrize] = useState(jarPrize);
+  const [header, setHeader] = useState(dashboardHeader);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,6 +37,7 @@ export function AdminSettings({ showResetButton, showRemoveFromToday: initialRem
       setShowRemove(formData.get("show_remove_from_today") === "true");
       setTarget(String(formData.get("jar_target") || 1500));
       setPrize((formData.get("jar_prize") as string) || "");
+      setHeader((formData.get("dashboard_header") as string) || "");
       router.refresh();
     }
   }
@@ -44,6 +47,18 @@ export function AdminSettings({ showResetButton, showRemoveFromToday: initialRem
       <form onSubmit={handleSubmit} className="space-y-4">
           <input type="hidden" name="show_reset_button" value={showReset ? "true" : "false"} />
           <input type="hidden" name="show_remove_from_today" value={showRemove ? "true" : "false"} />
+          <div className="space-y-2">
+            <Label htmlFor="dashboard_header">Dashboard header</Label>
+            <Input
+              id="dashboard_header"
+              name="dashboard_header"
+              placeholder="e.g. Smith Family Dashboard (leave empty for default)"
+              value={header}
+              onChange={(e) => setHeader(e.target.value)}
+              className="text-sm"
+            />
+            <p className="text-xs text-slate-500">Default: &quot;[Family name] Family Dashboard&quot;</p>
+          </div>
           <div className="space-y-2">
             <Label>Community Jar</Label>
             <div className="grid gap-2 sm:grid-cols-2">

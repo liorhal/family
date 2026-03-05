@@ -67,6 +67,10 @@ export function AdminMembers({ members }: AdminMembersProps) {
               <Label htmlFor="name">Name</Label>
               <Input id="name" name="name" placeholder="e.g. Emma" required />
             </div>
+            <div className="flex-1 min-w-0 sm:min-w-[120px] space-y-2">
+              <Label htmlFor="birthday">Birthday</Label>
+              <Input id="birthday" name="birthday" type="date" />
+            </div>
             <div className="flex-1 min-w-0 sm:min-w-[200px] space-y-2">
               <Label htmlFor="role">Role</Label>
               <select
@@ -101,12 +105,16 @@ export function AdminMembers({ members }: AdminMembersProps) {
                     onSubmit={(e) => handleEdit(m.id, e)}
                     className="flex flex-col gap-2 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
                   >
-                    <div className="flex gap-2">
-                      <div className="flex-1 space-y-1">
+                    <div className="flex flex-wrap gap-2">
+                      <div className="flex-1 min-w-0 space-y-1">
                         <Label>Name</Label>
                         <Input name="name" defaultValue={m.name} required />
                       </div>
-                      <div className="flex-1 space-y-1">
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <Label>Birthday</Label>
+                        <Input name="birthday" type="date" defaultValue={m.birthday ?? ""} />
+                      </div>
+                      <div className="flex-1 min-w-0 space-y-1">
                         <Label>Role</Label>
                         <select
                           name="role"
