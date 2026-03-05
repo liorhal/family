@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { resetActivity } from "@/app/actions";
 import { MemberAvatar } from "@/components/MemberAvatar";
+import { MemberAvatarPicker } from "@/components/MemberAvatarPicker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -24,6 +25,7 @@ export interface ActivityEntry {
 interface Member {
   id: string;
   name: string;
+  avatar_url?: string | null;
 }
 
 interface ActivityLogProps {
@@ -96,19 +98,15 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
             </option>
           ))}
         </select>
-        <Filter className="h-4 w-4 text-slate-400" />
-        <select
+        <Filter className="h-4 w-4 shrink-0 text-slate-400" />
+        <MemberAvatarPicker
+          members={members}
           value={filterMemberId}
-          onChange={(e) => setFilterMemberId(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-        >
-          <option value="">All members</option>
-          {members.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
-          ))}
-        </select>
+          onChange={setFilterMemberId}
+          size="sm"
+          allowEmpty
+          emptyLabel="All members"
+        />
       </div>
 
       <ul className="space-y-2">

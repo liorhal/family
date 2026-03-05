@@ -23,6 +23,8 @@ interface MemberAvatarPickerProps {
   size?: "sm" | "md";
   className?: string;
   allowEmpty?: boolean;
+  /** Label for empty option when allowEmpty (e.g. "All members") */
+  emptyLabel?: string;
 }
 
 export function MemberAvatarPicker({
@@ -32,6 +34,7 @@ export function MemberAvatarPicker({
   size = "sm",
   className,
   allowEmpty = false,
+  emptyLabel = "No default",
 }: MemberAvatarPickerProps) {
   const avatarSize = size === "sm" ? "sm" : "md";
   const triggerSize = size === "sm" ? "h-8 w-8" : "h-10 w-10";
@@ -66,8 +69,10 @@ export function MemberAvatarPicker({
               !value && "bg-slate-100 dark:bg-slate-800"
             )}
           >
-            <UserPlus className="h-4 w-4 shrink-0 text-slate-400" />
-            <span className="text-slate-500">No default</span>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">
+              <UserPlus className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+            </span>
+            <span className="text-slate-500">{emptyLabel}</span>
           </DropdownMenuItem>
         )}
         {members.map((m) => (
@@ -79,7 +84,9 @@ export function MemberAvatarPicker({
               value === m.id && "bg-slate-100 dark:bg-slate-800"
             )}
           >
-            <MemberAvatar name={m.name} avatarUrl={m.avatar_url} size={avatarSize} />
+            <span className="shrink-0">
+              <MemberAvatar name={m.name} avatarUrl={m.avatar_url} size={avatarSize} />
+            </span>
             <span className="truncate">{m.name}</span>
           </DropdownMenuItem>
         ))}

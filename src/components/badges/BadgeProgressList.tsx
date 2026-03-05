@@ -8,6 +8,7 @@ import {
   type FamilyBadgeEntry,
 } from "@/app/actions";
 import { MemberAvatar } from "@/components/MemberAvatar";
+import { MemberAvatarPicker } from "@/components/MemberAvatarPicker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Flame, Dumbbell, Star, Trophy, Award, Check, Users } from "lucide-react";
 
@@ -215,23 +216,14 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
                 By member
               </button>
             </div>
-            {view === "member" && (
-              <>
-                <select
-                  value={selectedMemberId}
-                  onChange={(e) => setSelectedMemberId(e.target.value)}
-                  className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 dark:border-slate-700 dark:bg-slate-800"
-                >
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                {selectedMember && (
-                  <MemberAvatar name={selectedMember.name} avatarUrl={selectedMember.avatar_url} size="sm" />
-                )}
-              </>
+            {view === "member" && members.length > 0 && (
+              <MemberAvatarPicker
+                members={members}
+                value={selectedMemberId}
+                onChange={setSelectedMemberId}
+                size="sm"
+                allowEmpty={false}
+              />
             )}
           </div>
         </CardContent>

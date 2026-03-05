@@ -118,7 +118,7 @@ export function AdminMembers({ members }: AdminMembersProps) {
                         </select>
                       </div>
                     </div>
-                    <AvatarPicker name="avatar_url" value={editAvatar} onChange={setEditAvatar} />
+                    <AvatarPicker name="avatar_url" value={editAvatar} onChange={setEditAvatar} memberId={m.id} />
                     <div className="flex gap-2">
                       <Button type="submit" disabled={loading}>Save</Button>
                       <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
