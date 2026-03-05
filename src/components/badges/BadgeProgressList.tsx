@@ -120,7 +120,8 @@ export function BadgeProgressList({ members }: BadgeProgressListProps) {
             </span>
             {p.earned && (
               <span className="ml-1.5 inline-flex items-center gap-0.5 text-emerald-600">
-                <Check className="h-3 w-3" /> Earned!
+                <Check className="h-3 w-3" />
+                Earned{p.earnedAt ? ` · ${new Date(p.earnedAt).toLocaleDateString()}` : "!"}
               </span>
             )}
           </p>

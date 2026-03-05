@@ -569,27 +569,37 @@ export interface BadgeProgress {
   threshold: number;
   earned: boolean;
   taskTitle?: string;
+  /** ISO date when badge was earned (from badge_earnings) */
+  earnedAt?: string;
 }
 
-/** Get badge progress for a family member */
-export async function getBadgeProgress(memberId: string): Promise<{ error?: string; data?: BadgeProgress[] }> {
+interface RawBadgeProgress {
+  badgeId: string;
+  type: "general_streak" | "sports_streak" | "master_of_task";
+  title: string;
+  description: string;
+  rawCurrent: number;
+  threshold: number;
+  earned: boolean;
+  taskTitle?: string;
+}
+
+/** Internal: compute badge progress with raw (uncapped) current for "just earned" detection */
+async function getBadgeProgressRaw(memberId: string): Promise<RawBadgeProgress[] | null> {
   const { member, familyId } = await getCurrentMember();
-  if (!member || !familyId) return { error: "Unauthorized" };
+  if (!member || !familyId) return null;
 
   const supabase = await createClient();
-
-  // Verify member is in user's family
   const { data: memberData } = await supabase
     .from("members")
     .select("family_id")
     .eq("id", memberId)
     .single();
-  if (!memberData || memberData.family_id !== familyId) return { error: "Unauthorized" };
+  if (!memberData || memberData.family_id !== familyId) return null;
 
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-  // 1. General streak from streaks table (use longest_streak)
   const { data: streak } = await supabase
     .from("streaks")
     .select("longest_streak")
@@ -597,7 +607,6 @@ export async function getBadgeProgress(memberId: string): Promise<{ error?: stri
     .single();
   const generalStreak = streak?.longest_streak ?? 0;
 
-  // 2. Sports streak: compute from scores_log (sport entries by date, find longest consecutive)
   const { data: sportScores } = await supabase
     .from("scores_log")
     .select("created_at")
@@ -624,7 +633,6 @@ export async function getBadgeProgress(memberId: string): Promise<{ error?: stri
     sportsStreak = Math.max(sportsStreak, run);
   }
 
-  // 3. Master of task: count house completions per task
   const { data: houseScores } = await supabase
     .from("scores_log")
     .select("source_id")
@@ -637,7 +645,6 @@ export async function getBadgeProgress(memberId: string): Promise<{ error?: stri
     taskCounts[tid] = (taskCounts[tid] ?? 0) + 1;
   }
 
-  // Fetch all family tasks for master badges
   const { data: familyTasks } = await supabase
     .from("tasks")
     .select("id, title")
@@ -647,32 +654,29 @@ export async function getBadgeProgress(memberId: string): Promise<{ error?: stri
     "@/lib/badges"
   );
 
-  const result: BadgeProgress[] = [];
-
+  const result: RawBadgeProgress[] = [];
   for (const b of GENERAL_STREAK_BADGES) {
     result.push({
       badgeId: b.id,
       type: "general_streak",
       title: b.title,
       description: b.description,
-      current: generalStreak,
+      rawCurrent: generalStreak,
       threshold: b.threshold,
       earned: generalStreak >= b.threshold,
     });
   }
-
   for (const b of SPORTS_STREAK_BADGES) {
     result.push({
       badgeId: b.id,
       type: "sports_streak",
       title: b.title,
       description: b.description,
-      current: sportsStreak,
+      rawCurrent: sportsStreak,
       threshold: b.threshold,
       earned: sportsStreak >= b.threshold,
     });
   }
-
   for (const task of familyTasks ?? []) {
     const count = taskCounts[task.id] ?? 0;
     for (const th of MASTER_THRESHOLDS) {
@@ -682,24 +686,76 @@ export async function getBadgeProgress(memberId: string): Promise<{ error?: stri
         type: "master_of_task",
         title: badge.title,
         description: badge.description,
-        current: count,
+        rawCurrent: count,
         threshold: th,
         earned: count >= th,
         taskTitle: task.title,
       });
     }
   }
+  return result;
+}
+
+/** Get badge progress for a family member (capped display, no "7 of 5") */
+export async function getBadgeProgress(memberId: string): Promise<{ error?: string; data?: BadgeProgress[] }> {
+  const raw = await getBadgeProgressRaw(memberId);
+  if (!raw) return { error: "Unauthorized" };
+
+  const supabase = await createClient();
+  const { data: earnings } = await supabase
+    .from("badge_earnings")
+    .select("badge_id, earned_at")
+    .eq("member_id", memberId);
+  const earnedAtMap = new Map<string, string>(
+    (earnings ?? []).map((e) => [e.badge_id, e.earned_at])
+  );
+
+  const result: BadgeProgress[] = raw.map((p) => ({
+    badgeId: p.badgeId,
+    type: p.type,
+    title: p.title,
+    description: p.description,
+    current: p.earned ? Math.min(p.rawCurrent, p.threshold) : p.rawCurrent,
+    threshold: p.threshold,
+    earned: p.earned,
+    taskTitle: p.taskTitle,
+    earnedAt: earnedAtMap.get(p.badgeId),
+  }));
 
   return { data: result };
 }
 
-/** Returns badges that were just earned (current === threshold). Call after a completion. */
+/** Returns badges just earned (rawCurrent === threshold). Records in badge_earnings, awards 5pt for master_of_task only. */
 async function getNewlyEarnedBadges(memberId: string): Promise<{ title: string }[]> {
-  const res = await getBadgeProgress(memberId);
-  if (res.error || !res.data) return [];
-  return res.data
-    .filter((p) => p.earned && p.current === p.threshold)
-    .map((p) => ({ title: p.title }));
+  const raw = await getBadgeProgressRaw(memberId);
+  if (!raw) return [];
+
+  const supabase = await createClient();
+
+  // Newly earned = exactly at threshold this completion (avoids "7 of 5" false positives)
+  const newlyEarned = raw.filter((p) => p.earned && p.rawCurrent === p.threshold);
+  if (newlyEarned.length === 0) return [];
+
+  const now = new Date().toISOString();
+
+  for (const p of newlyEarned) {
+    await supabase.from("badge_earnings").upsert(
+      { member_id: memberId, badge_id: p.badgeId, earned_at: now },
+      { onConflict: "member_id,badge_id" }
+    );
+    // 5pt bonus for master_of_task only (avoid double reward with 7/14/21 streak bonus)
+    if (p.type === "master_of_task") {
+      await supabase.from("scores_log").insert({
+        member_id: memberId,
+        source_type: "bonus",
+        source_id: null,
+        score_delta: 5,
+        description: `Badge: ${p.title}`,
+      });
+    }
+  }
+
+  return newlyEarned.map((p) => ({ title: p.title }));
 }
 
 export interface FamilyBadgeEntry extends BadgeProgress {
