@@ -4,18 +4,24 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateFamilySettings } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AdminSection } from "./AdminSection";
 
 interface AdminSettingsProps {
   showResetButton: boolean;
   showRemoveFromToday?: boolean;
+  jarTarget?: number;
+  jarPrize?: string;
 }
 
-export function AdminSettings({ showResetButton, showRemoveFromToday: initialRemove = false }: AdminSettingsProps) {
+export function AdminSettings({ showResetButton, showRemoveFromToday: initialRemove = false, jarTarget = 1500, jarPrize = "1,500 points = Family Movie Night 🍿" }: AdminSettingsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showReset, setShowReset] = useState(showResetButton);
   const [showRemove, setShowRemove] = useState(initialRemove);
+  const [target, setTarget] = useState(String(jarTarget));
+  const [prize, setPrize] = useState(jarPrize);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -27,6 +33,8 @@ export function AdminSettings({ showResetButton, showRemoveFromToday: initialRem
     else {
       setShowReset(formData.get("show_reset_button") === "true");
       setShowRemove(formData.get("show_remove_from_today") === "true");
+      setTarget(String(formData.get("jar_target") || 1500));
+      setPrize((formData.get("jar_prize") as string) || "");
       router.refresh();
     }
   }
@@ -36,6 +44,32 @@ export function AdminSettings({ showResetButton, showRemoveFromToday: initialRem
       <form onSubmit={handleSubmit} className="space-y-4">
           <input type="hidden" name="show_reset_button" value={showReset ? "true" : "false"} />
           <input type="hidden" name="show_remove_from_today" value={showRemove ? "true" : "false"} />
+          <div className="space-y-2">
+            <Label>Community Jar</Label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="jar_target" className="text-xs">Target points</Label>
+                <Input
+                  id="jar_target"
+                  name="jar_target"
+                  type="number"
+                  min={1}
+                  value={target}
+                  onChange={(e) => setTarget(e.target.value)}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="jar_prize" className="text-xs">Prize / milestone label</Label>
+                <Input
+                  id="jar_prize"
+                  name="jar_prize"
+                  placeholder="e.g. Family Movie Night 🍿"
+                  value={prize}
+                  onChange={(e) => setPrize(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
           <label className="flex cursor-pointer items-center gap-3">
             <input
               type="checkbox"

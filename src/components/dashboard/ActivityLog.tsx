@@ -33,6 +33,7 @@ interface ActivityLogProps {
   entries: ActivityEntry[];
   members: Member[];
   showResetButton?: boolean;
+  horizontal?: boolean;
 }
 
 const sourceBadgeVariant: Record<ActivityEntry["source_type"], "house" | "sport" | "school" | "streak" | "fine"> = {
@@ -46,13 +47,13 @@ const sourceBadgeVariant: Record<ActivityEntry["source_type"], "house" | "sport"
 
 const DAY_OPTIONS = [1, 2, 3, 5, 7, 14, 30] as const;
 
-export function ActivityLog({ entries, members, showResetButton = false }: ActivityLogProps) {
+export function ActivityLog({ entries, members, showResetButton = false, horizontal = false }: ActivityLogProps) {
   const router = useRouter();
   const [days, setDays] = useState(1);
   const [filterMemberId, setFilterMemberId] = useState<string>("");
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const INITIAL_ROWS = 8;
+  const INITIAL_ROWS = horizontal ? 50 : 8;
 
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
@@ -85,6 +86,80 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
     );
   }
 
+  const listContent = (
+    <>
+      {displayedEntries.map((entry) => (
+        <li
+          key={entry.id}
+          className={
+            horizontal
+              ? "flex shrink-0 flex-col w-44 rounded-xl bg-white/90 p-2.5 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:bg-slate-800/90"
+              : "relative ml-9 rounded-xl rounded-bl-none bg-white/90 px-3 py-2 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:bg-slate-800/90"
+          }
+        >
+          {horizontal ? (
+            <>
+              <div className="flex items-center gap-2">
+                <MemberAvatar name={entry.member_name} avatarUrl={entry.member_avatar_url} size="sm" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-semibold">{entry.member_name}</p>
+                  <span className={`text-xs font-bold ${entry.score_delta >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    {entry.score_delta >= 0 ? "+" : ""}{entry.score_delta}
+                  </span>
+                </div>
+              </div>
+              <p className="mt-1 line-clamp-2 text-xs text-slate-700 dark:text-slate-300">{entry.title}</p>
+              <p className="mt-0.5 text-[10px] text-slate-500">{format(new Date(entry.created_at), "EEE MMM d")}</p>
+              {showResetButton && entry.source_type !== "streak_bonus" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="mt-1 h-7 w-7 text-slate-500 hover:text-amber-600"
+                  onClick={() => handleReset(entry)}
+                  disabled={resettingId === entry.id}
+                  title="Reset"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                </Button>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="absolute -left-9 top-1.5">
+                <MemberAvatar name={entry.member_name} avatarUrl={entry.member_avatar_url} size="sm" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <CategoryIcon type={entry.source_type} size="sm" />
+                  <span className="text-sm font-semibold">{entry.member_name}</span>
+                  <span className={`ml-auto shrink-0 text-xs font-bold ${entry.score_delta >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    {entry.score_delta >= 0 ? "+" : ""}{entry.score_delta}
+                  </span>
+                </div>
+                <p className="mt-0.5 line-clamp-1 text-xs text-slate-700 dark:text-slate-300">{entry.title}</p>
+                <p className="text-[10px] text-slate-500">{format(new Date(entry.created_at), "EEE MMM d · h:mm a")}</p>
+              </div>
+              <div className="mt-1 flex items-center justify-end gap-0.5">
+                {showResetButton && entry.source_type !== "streak_bonus" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-slate-500 hover:text-amber-600"
+                    onClick={() => handleReset(entry)}
+                    disabled={resettingId === entry.id}
+                    title="Reset (undo completion)"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+        </li>
+      ))}
+    </>
+  );
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-1.5">
@@ -110,48 +185,14 @@ export function ActivityLog({ entries, members, showResetButton = false }: Activ
         />
       </div>
 
-      <ul className="space-y-2">
-        {displayedEntries.map((entry) => (
-          <li
-            key={entry.id}
-            className="relative ml-9 rounded-xl rounded-bl-none bg-white/90 px-3 py-2 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:bg-slate-800/90"
-          >
-            <div className="absolute -left-9 top-1.5">
-              <MemberAvatar
-                name={entry.member_name}
-                avatarUrl={entry.member_avatar_url}
-                size="sm"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <CategoryIcon type={entry.source_type} size="sm" />
-                <span className="text-sm font-semibold">{entry.member_name}</span>
-                <span className={`ml-auto shrink-0 text-xs font-bold ${entry.score_delta >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {entry.score_delta >= 0 ? "+" : ""}{entry.score_delta}
-                </span>
-              </div>
-              <p className="mt-0.5 line-clamp-1 text-xs text-slate-700 dark:text-slate-300">{entry.title}</p>
-              <p className="text-[10px] text-slate-500">
-                {format(new Date(entry.created_at), "EEE MMM d · h:mm a")}
-              </p>
-            </div>
-            <div className="mt-1 flex items-center justify-end gap-0.5">
-              {showResetButton && entry.source_type !== "streak_bonus" && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-slate-500 hover:text-amber-600"
-                  onClick={() => handleReset(entry)}
-                  disabled={resettingId === entry.id}
-                  title="Reset (undo completion)"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </li>
-        ))}
+      <ul
+        className={
+          horizontal
+            ? "flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-slate-300"
+            : "space-y-2"
+        }
+      >
+        {listContent}
       </ul>
       {hasMore && !showAll && (
         <Button

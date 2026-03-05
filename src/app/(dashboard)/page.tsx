@@ -27,14 +27,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = family?.name ? `${family.name} Family Dashboard` : "Family Dashboard";
   return { title };
 }
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivityLog } from "@/components/dashboard/ActivityLog";
 import { CommunityJar } from "@/components/dashboard/CommunityJar";
 import { DashboardTodayActivities } from "@/components/dashboard/DashboardTodayActivities";
 import { PodiumLeaderboard } from "@/components/dashboard/PodiumLeaderboard";
 import { RealtimeLeaderboard } from "@/components/dashboard/RealtimeLeaderboard";
-import { WeeklyChart } from "@/components/dashboard/WeeklyChart";
-import { Flame, Trophy, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { FeelingLuckyButton } from "@/components/dashboard/FeelingLuckyButton";
 
 export default async function DashboardPage() {
@@ -67,7 +65,7 @@ export default async function DashboardPage() {
   // #endregion
   const { data: family } = await supabase
     .from("families")
-    .select("name, show_reset_button, show_remove_from_today")
+    .select("name, show_reset_button, show_remove_from_today, jar_target, jar_prize")
     .eq("id", familyId)
     .single();
 
@@ -180,20 +178,6 @@ export default async function DashboardPage() {
   }));
 
   const memberIds = (members ?? []).map((m) => m.id);
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = subDays(new Date(), 6 - i);
-    const row: Record<string, string | number> = {
-      day: format(d, "EEE"),
-    };
-    for (const m of members ?? []) {
-      row[m.id] = (scores ?? []).filter(
-        (s) =>
-          new Date(s.created_at).toDateString() === d.toDateString() &&
-          s.member_id === m.id
-      ).reduce((sum, s) => sum + (s.source_type === "fine" ? -s.score_delta : s.score_delta), 0);
-    }
-    return row;
-  });
 
   // Today's activities (house, sport, school)
   const today = new Date();
@@ -401,7 +385,7 @@ export default async function DashboardPage() {
       <div className="sticky top-[5rem] z-40 -mx-4 space-y-4 px-4 sm:top-20 sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:px-0">
         <div className="rounded-2xl border border-white/60 bg-white/70 p-4 shadow-lg backdrop-blur-xl sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
-            <div className="shrink-0 lg:w-1/2">
+            <div className="shrink-0 lg:w-2/3">
               <h2 className="mb-2 text-center text-sm font-semibold uppercase tracking-wide text-slate-500 lg:text-left">
                 Leaderboard
               </h2>
@@ -415,7 +399,7 @@ export default async function DashboardPage() {
             </div>
             <div className="flex-1 lg:border-l lg:border-slate-200/60 lg:pl-6">
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Statistics</h2>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                 <div>
                   <p className="text-xs text-slate-500">Monthly score</p>
                   <p className="text-lg font-bold text-blue-600">{totalMonthlyScore} pts</p>
@@ -449,38 +433,11 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <CommunityJar currentPoints={totalMonthlyScore} />
-      </div>
-
-      {/* Chart + Last Activities */}
-      <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
-        <Card>
-          <CardHeader className="p-4 pb-1">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Flame className="h-4 w-4 text-orange-500" />
-              Last 7 days
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <WeeklyChart data={last7Days} members={members ?? []} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="p-4 pb-1">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Calendar className="h-4 w-4 text-blue-500" />
-              Last Activities
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 pb-4">
-            <ActivityLog
-              entries={activityEntries}
-              members={members ?? []}
-              showResetButton={family?.show_reset_button ?? false}
-            />
-          </CardContent>
-        </Card>
+        <CommunityJar
+          currentPoints={totalMonthlyScore}
+          target={family?.jar_target ?? 1500}
+          prize={family?.jar_prize ?? "1,500 points = Family Movie Night 🍿"}
+        />
       </div>
 
       <DashboardTodayActivities
@@ -491,6 +448,20 @@ export default async function DashboardPage() {
         members={members ?? []}
         showRemoveFromToday={family?.show_remove_from_today ?? false}
       />
+
+      {/* Last Activities - bottom horizontal panel */}
+      <div className="rounded-2xl border border-white/60 bg-white/70 p-4 shadow-lg backdrop-blur-xl">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <Calendar className="h-4 w-4 text-blue-500" />
+          Last Activities
+        </h2>
+        <ActivityLog
+          entries={activityEntries}
+          members={members ?? []}
+          showResetButton={family?.show_reset_button ?? false}
+          horizontal
+        />
+      </div>
     </div>
   );
 }

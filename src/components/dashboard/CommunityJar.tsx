@@ -1,15 +1,18 @@
 "use client";
 
-const FAMILY_GOAL = 1500;
-const MILESTONE_LABEL = "1,500 points = Family Movie Night 🍿";
-
 interface CommunityJarProps {
   currentPoints: number;
+  target?: number;
+  prize?: string;
 }
 
-export function CommunityJar({ currentPoints }: CommunityJarProps) {
-  const progress = Math.min(100, (currentPoints / FAMILY_GOAL) * 100);
-  const coinCount = Math.min(12, Math.floor((currentPoints / FAMILY_GOAL) * 12));
+const DEFAULT_TARGET = 1500;
+const DEFAULT_PRIZE = "1,500 points = Family Movie Night 🍿";
+
+export function CommunityJar({ currentPoints, target = DEFAULT_TARGET, prize = DEFAULT_PRIZE }: CommunityJarProps) {
+  const goal = Math.max(1, target);
+  const progress = Math.min(100, (currentPoints / goal) * 100);
+  const coinCount = Math.min(12, Math.floor((currentPoints / goal) * 12));
 
   return (
     <div className="rounded-2xl border border-amber-200/60 bg-amber-50/80 px-4 py-3 shadow-lg backdrop-blur-sm sm:px-5 sm:py-4">
@@ -36,10 +39,10 @@ export function CommunityJar({ currentPoints }: CommunityJarProps) {
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-base font-bold text-amber-900 sm:text-lg">
-            {currentPoints.toLocaleString()} / {FAMILY_GOAL.toLocaleString()} pts
+            {currentPoints.toLocaleString()} / {goal.toLocaleString()} pts
           </p>
           <p className="text-xs font-medium text-amber-700 sm:text-sm">
-            {MILESTONE_LABEL}
+            {prize}
           </p>
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-amber-200/60">
             <div

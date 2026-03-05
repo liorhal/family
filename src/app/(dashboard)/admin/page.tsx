@@ -74,7 +74,7 @@ export default async function AdminPage() {
 
   const { data: family } = await supabase
     .from("families")
-    .select("show_reset_button, show_remove_from_today")
+    .select("show_reset_button, show_remove_from_today, jar_target, jar_prize")
     .eq("id", member.family_id)
     .single();
 
@@ -101,6 +101,8 @@ export default async function AdminPage() {
       <AdminSettings
         showResetButton={family?.show_reset_button ?? false}
         showRemoveFromToday={family?.show_remove_from_today ?? false}
+        jarTarget={family?.jar_target ?? 1500}
+        jarPrize={family?.jar_prize ?? "1,500 points = Family Movie Night 🍿"}
       />
     </div>
   );

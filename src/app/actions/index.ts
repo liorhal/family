@@ -889,10 +889,12 @@ export async function updateFamilySettings(formData: FormData) {
   const supabase = await createClient();
   const show_reset_button = formData.get("show_reset_button") === "true";
   const show_remove_from_today = formData.get("show_remove_from_today") === "true";
+  const jar_target = Math.max(1, parseInt(String(formData.get("jar_target")), 10) || 1500);
+  const jar_prize = (formData.get("jar_prize") as string)?.trim() || "1,500 points = Family Movie Night 🍿";
 
   const { error } = await supabase
     .from("families")
-    .update({ show_reset_button, show_remove_from_today })
+    .update({ show_reset_button, show_remove_from_today, jar_target, jar_prize })
     .eq("id", familyId);
 
   if (error) return { error: error.message };
