@@ -16,10 +16,11 @@ import {
   completeTask,
   completeSportActivity,
   completeSchoolTask,
+  dismissActivityFromToday,
 } from "@/app/actions";
 import { MemberAvatar } from "@/components/MemberAvatar";
 import { MemberAvatarPicker } from "@/components/MemberAvatarPicker";
-import { Check, Dumbbell, BookOpen, Home, UserPlus, RotateCcw } from "lucide-react";
+import { Check, Dumbbell, BookOpen, Home, UserPlus, RotateCcw, Trash2 } from "lucide-react";
 
 interface TakenTask {
   id: string;
@@ -64,6 +65,7 @@ interface DashboardTodayActivitiesProps {
   sportActivities: SportActivity[];
   schoolTasks: SchoolTask[];
   members: Member[];
+  showRemoveFromToday?: boolean;
 }
 
 function fireConfetti() {
@@ -76,6 +78,7 @@ export function DashboardTodayActivities({
   sportActivities,
   schoolTasks,
   members,
+  showRemoveFromToday = false,
 }: DashboardTodayActivitiesProps) {
   const router = useRouter();
   const [completing, setCompleting] = useState<string | null>(null);
@@ -84,8 +87,20 @@ export function DashboardTodayActivities({
   const [schoolCompleterForTask, setSchoolCompleterForTask] = useState<Record<string, string>>({});
   const [celebrationMember, setCelebrationMember] = useState<Member | null>(null);
   const [badgeCelebration, setBadgeCelebration] = useState<{ memberName: string; badgeTitles: string[] } | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
 
   const getMember = (id: string) => members.find((m) => m.id === id);
+
+  async function handleRemoveFromToday(
+    sourceType: "house" | "sport" | "school",
+    sourceId: string
+  ) {
+    setRemoving(`${sourceType}-${sourceId}`);
+    const res = await dismissActivityFromToday(sourceType, sourceId);
+    setRemoving(null);
+    if (res.error) alert(res.error);
+    else router.refresh();
+  }
 
   async function handleTakeAndComplete(taskId: string) {
     const assigneeId = assigneeForTask[taskId];
@@ -317,6 +332,18 @@ export function DashboardTodayActivities({
             >
               <Check className="h-4 w-4" />
             </Button>
+            {showRemoveFromToday && (
+              <Button
+                variant="outline"
+                size="icon"
+                className={iconBtn}
+                onClick={() => handleRemoveFromToday("house", t.id)}
+                disabled={removing === `house-${t.id}`}
+                title="Remove from today"
+              >
+                <Trash2 className="h-4 w-4 text-slate-500" />
+              </Button>
+            )}
           </div>
         </motion.div>
               ))}
@@ -380,6 +407,18 @@ export function DashboardTodayActivities({
               >
                 <Check className="h-4 w-4" />
               </Button>
+              {showRemoveFromToday && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={iconBtn}
+                  onClick={() => handleRemoveFromToday("sport", a.id)}
+                  disabled={removing === `sport-${a.id}`}
+                  title="Remove from today"
+                >
+                  <Trash2 className="h-4 w-4 text-slate-500" />
+                </Button>
+              )}
             </div>
           </motion.div>
         );
@@ -445,6 +484,18 @@ export function DashboardTodayActivities({
               >
                 <Check className="h-4 w-4" />
               </Button>
+              {showRemoveFromToday && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={iconBtn}
+                  onClick={() => handleRemoveFromToday("school", t.id)}
+                  disabled={removing === `school-${t.id}`}
+                  title="Remove from today"
+                >
+                  <Trash2 className="h-4 w-4 text-slate-500" />
+                </Button>
+              )}
             </div>
           </motion.div>
         );

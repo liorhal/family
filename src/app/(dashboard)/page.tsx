@@ -66,7 +66,7 @@ export default async function DashboardPage() {
   // #endregion
   const { data: family } = await supabase
     .from("families")
-    .select("name, show_reset_button")
+    .select("name, show_reset_button, show_remove_from_today")
     .eq("id", familyId)
     .single();
 
@@ -197,8 +197,19 @@ export default async function DashboardPage() {
     t.scheduled_days.length === 0 ||
     t.scheduled_days.includes(dayOfWeek);
 
+  const todayForDismissals = format(today, "yyyy-MM-dd");
+  const { data: dismissalsRaw } = await supabase
+    .from("activity_dismissals")
+    .select("source_type, source_id")
+    .eq("family_id", familyId)
+    .eq("date", todayForDismissals);
+  const dismissedSet = new Set(
+    (dismissalsRaw ?? []).map((d) => `${d.source_type}:${d.source_id}`)
+  );
+
   const openTasks = (openTasksRaw ?? [])
     .filter(isTaskRelevantToday)
+    .filter((t) => !dismissedSet.has(`house:${t.id}`))
     .sort((a, b) => {
       const aWeekly = (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
       const bWeekly = (b.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
@@ -220,6 +231,7 @@ export default async function DashboardPage() {
         a.type === "extra" ||
         ((a.scheduled_days?.length ?? 0) > 0 && a.scheduled_days!.includes(dayOfWeek))
     )
+    .filter((a) => !dismissedSet.has(`sport:${a.id}`))
     .sort((a, b) => {
       const aWeekly = a.type === "weekly" || (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
       const bWeekly = b.type === "weekly" || (b.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
@@ -238,12 +250,15 @@ export default async function DashboardPage() {
     .or(`due_date.gte.${todayStr},due_date.is.null`)
     .order("due_date", { ascending: true });
 
-  const schoolTasks = (schoolTasksRaw ?? []).filter(
-    (t) =>
-      !t.scheduled_days ||
-      t.scheduled_days.length === 0 ||
-      t.scheduled_days.includes(dayOfWeek)
-  ).sort((a, b) => {
+  const schoolTasks = (schoolTasksRaw ?? [])
+    .filter(
+      (t) =>
+        !t.scheduled_days ||
+        t.scheduled_days.length === 0 ||
+        t.scheduled_days.includes(dayOfWeek)
+    )
+    .filter((t) => !dismissedSet.has(`school:${t.id}`))
+    .sort((a, b) => {
     const aWeekly = (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
     const bWeekly = (b.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
     if (bWeekly !== aWeekly) return bWeekly - aWeekly;
@@ -456,6 +471,7 @@ export default async function DashboardPage() {
         sportActivities={sportActivities}
         schoolTasks={schoolTasks}
         members={members ?? []}
+        showRemoveFromToday={family?.show_remove_from_today ?? false}
       />
     </div>
   );

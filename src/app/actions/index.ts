@@ -888,15 +888,41 @@ export async function updateFamilySettings(formData: FormData) {
 
   const supabase = await createClient();
   const show_reset_button = formData.get("show_reset_button") === "true";
+  const show_remove_from_today = formData.get("show_remove_from_today") === "true";
 
   const { error } = await supabase
     .from("families")
-    .update({ show_reset_button })
+    .update({ show_reset_button, show_remove_from_today })
     .eq("id", familyId);
 
   if (error) return { error: error.message };
   revalidatePath("/");
   revalidatePath("/admin");
+  revalidatePath("/today");
+  return { success: true };
+}
+
+/** Remove an activity from today's list. Reappears tomorrow. */
+export async function dismissActivityFromToday(
+  sourceType: "house" | "sport" | "school",
+  sourceId: string
+) {
+  const { member, familyId } = await getCurrentMember();
+  if (!member || !familyId || member.role !== "admin") {
+    return { error: "Unauthorized" };
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  const supabase = await createClient();
+  const { error } = await supabase.from("activity_dismissals").insert({
+    family_id: familyId,
+    source_type: sourceType,
+    source_id: sourceId,
+    date: today,
+  });
+
+  if (error) return { error: error.message };
+  revalidatePath("/");
   revalidatePath("/today");
   return { success: true };
 }
@@ -938,7 +964,7 @@ export async function createSportActivity(formData: FormData) {
     member_id: targetMemberId || null,
     title,
     type,
-    scheduled_days: type === "weekly" ? scheduled_days : [],
+    scheduled_days,
     score_value,
   });
 
@@ -980,7 +1006,7 @@ export async function updateSportActivity(activityId: string, formData: FormData
       member_id: targetMemberId || null,
       title,
       type,
-      scheduled_days: type === "weekly" ? scheduled_days : [],
+      scheduled_days,
       score_value,
     })
     .eq("id", activityId);

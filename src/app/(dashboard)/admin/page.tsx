@@ -50,7 +50,7 @@ export default async function AdminPage() {
 
   const { data: family } = await supabase
     .from("families")
-    .select("show_reset_button")
+    .select("show_reset_button, show_remove_from_today")
     .eq("id", member.family_id)
     .single();
 
@@ -74,7 +74,10 @@ export default async function AdminPage() {
         members={members ?? []}
       />
 
-      <AdminSettings showResetButton={family?.show_reset_button ?? false} />
+      <AdminSettings
+        showResetButton={family?.show_reset_button ?? false}
+        showRemoveFromToday={family?.show_remove_from_today ?? false}
+      />
     </div>
   );
 }
