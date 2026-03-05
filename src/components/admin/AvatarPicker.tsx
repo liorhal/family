@@ -3,8 +3,12 @@
 import { useRef, useState } from "react";
 import { AVATAR_OPTIONS, isEmojiAvatar } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
-import { uploadAvatar } from "@/app/actions";
+import { getAvatarUploadParams } from "@/app/actions";
+import { createClient } from "@/lib/supabase/client";
 import { MemberAvatar } from "@/components/MemberAvatar";
+
+const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB
+const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 interface AvatarPickerProps {
   name: string;
@@ -23,18 +27,36 @@ export function AvatarPicker({ name, value, onChange, memberId }: AvatarPickerPr
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadError(null);
-    setUploading(true);
-    const formData = new FormData();
-    formData.set("file", file);
-    if (memberId) formData.set("member_id", memberId);
-    const res = await uploadAvatar(formData);
-    setUploading(false);
-    e.target.value = "";
-    if (res.error) {
-      setUploadError(res.error);
-    } else if (res.url) {
-      onChange(res.url);
+    if (file.size > AVATAR_MAX_SIZE) {
+      setUploadError("File too large. Max 2MB.");
+      return;
     }
+    if (!AVATAR_TYPES.includes(file.type)) {
+      setUploadError("Invalid format. Use JPEG, PNG, or WebP.");
+      return;
+    }
+    setUploading(true);
+    const params = await getAvatarUploadParams(memberId);
+    if ("path" in params) {
+      const { path } = params;
+    const supabase = createClient();
+    const { error } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (error) {
+      setUploading(false);
+      setUploadError(error.message);
+      e.target.value = "";
+      return;
+    }
+    setUploading(false);
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+    onChange(data.publicUrl);
+    } else {
+      setUploading(false);
+      setUploadError(params.error ?? "Unknown error");
+    }
+    e.target.value = "";
   }
 
   const hasPhoto = value && !isEmojiAvatar(value) && (value.startsWith("http") || value.startsWith("data:"));

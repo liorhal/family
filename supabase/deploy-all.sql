@@ -250,3 +250,41 @@ CREATE POLICY "Users can add themselves as member" ON members FOR INSERT
 -- ========== 00003_realtime.sql (run separately if this fails) ==========
 -- ALTER PUBLICATION supabase_realtime ADD TABLE scores_log;
 -- ALTER PUBLICATION supabase_realtime ADD TABLE streaks;
+
+-- ========== 00020_avatars_storage.sql ==========
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'avatars',
+  'avatars',
+  true,
+  2097152,
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+DROP POLICY IF EXISTS "Family members can upload avatars" ON storage.objects;
+CREATE POLICY "Family members can upload avatars"
+ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (
+  bucket_id = 'avatars'
+  AND (storage.foldername(name))[1] = get_my_family_id()::text
+);
+
+DROP POLICY IF EXISTS "Family members can update avatars" ON storage.objects;
+CREATE POLICY "Family members can update avatars"
+ON storage.objects FOR UPDATE TO authenticated
+USING (
+  bucket_id = 'avatars'
+  AND (storage.foldername(name))[1] = get_my_family_id()::text
+);
+
+DROP POLICY IF EXISTS "Family members can delete avatars" ON storage.objects;
+CREATE POLICY "Family members can delete avatars"
+ON storage.objects FOR DELETE TO authenticated
+USING (
+  bucket_id = 'avatars'
+  AND (storage.foldername(name))[1] = get_my_family_id()::text
+);
