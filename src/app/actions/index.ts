@@ -798,17 +798,43 @@ export async function updateMember(memberId: string, formData: FormData) {
   return { success: true };
 }
 
-/** Returns upload path params for client-side avatar upload. Use from browser so JWT is sent. */
-export async function getAvatarUploadParams(memberId?: string | null): Promise<
-  { error?: string } | { familyId: string; path: string }
-> {
+const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB
+const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+/** Upload avatar photo using service role (bypasses RLS). User must be validated first. */
+export async function uploadAvatar(formData: FormData): Promise<{ error?: string; url?: string }> {
   const { member, familyId } = await getCurrentMember();
   if (!member || !familyId || member.role !== "admin") {
     return { error: "Unauthorized" };
   }
-  const ext = "webp";
-  const fileName = memberId ? `${memberId}.${ext}` : `${crypto.randomUUID()}.${ext}`;
-  return { familyId, path: `${familyId}/${fileName}` };
+
+  const file = formData.get("file") as File | null;
+  if (!file || !(file instanceof File)) {
+    return { error: "No file provided" };
+  }
+  if (file.size > AVATAR_MAX_SIZE) {
+    return { error: "File too large. Max 2MB." };
+  }
+  if (!AVATAR_TYPES.includes(file.type)) {
+    return { error: "Invalid format. Use JPEG, PNG, or WebP." };
+  }
+
+  const memberId = (formData.get("member_id") as string) || null;
+  const ext = file.name.split(".").pop()?.toLowerCase() || "webp";
+  const safeExt = ["jpeg", "jpg", "png", "webp"].includes(ext) ? ext : "webp";
+  const fileName = memberId ? `${memberId}.${safeExt}` : `${crypto.randomUUID()}.${safeExt}`;
+  const path = `${familyId}/${fileName}`;
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+  const { error } = await supabase.storage
+    .from("avatars")
+    .upload(path, file, { upsert: true, contentType: file.type });
+
+  if (error) return { error: error.message };
+
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  return { url: data.publicUrl };
 }
 
 /** Add bonus or fine points for a member (admin only) */
