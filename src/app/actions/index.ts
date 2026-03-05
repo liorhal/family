@@ -827,6 +827,9 @@ export async function uploadAvatar(formData: FormData): Promise<{ error?: string
 
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();
+  if (!supabase) {
+    return { error: "Avatar upload not configured. Add SUPABASE_SERVICE_ROLE_KEY to your environment." };
+  }
   const { error } = await supabase.storage
     .from("avatars")
     .upload(path, file, { upsert: true, contentType: file.type });
