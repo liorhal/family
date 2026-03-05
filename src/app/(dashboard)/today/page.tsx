@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
+import { isScheduledForDay } from "@/lib/utils";
 import { TodayTasks } from "@/components/today/TodayTasks";
 
 export default async function TodayPage() {
@@ -38,11 +39,9 @@ export default async function TodayPage() {
     .eq("status", "open")
     .or(`deadline.gte.${todayStr},deadline.is.null`);
 
-  const isTaskRelevantToday = (t: { recurring_daily?: boolean; scheduled_days?: number[] | null }) =>
+  const isTaskRelevantToday = (t: { recurring_daily?: boolean; scheduled_days?: (number | string)[] | null }) =>
     (t.recurring_daily === true) ||
-    !t.scheduled_days ||
-    t.scheduled_days.length === 0 ||
-    t.scheduled_days.includes(dayOfWeek);
+    isScheduledForDay(t.scheduled_days, dayOfWeek);
 
   const openTasks = (openTasksRaw ?? [])
     .filter(isTaskRelevantToday)
@@ -63,12 +62,7 @@ export default async function TodayPage() {
     .is("completed_at", null);
 
   const sportActivities = (sportActivitiesRaw ?? [])
-    .filter(
-      (a) =>
-        !a.scheduled_days ||
-        a.scheduled_days.length === 0 ||
-        a.scheduled_days.includes(dayOfWeek)
-    )
+    .filter((a) => isScheduledForDay(a.scheduled_days, dayOfWeek))
     .sort((a, b) => {
       if (a.type === "extra" && b.type !== "extra") return -1;
       if (a.type !== "extra" && b.type === "extra") return 1;
@@ -85,11 +79,8 @@ export default async function TodayPage() {
     .or(`due_date.gte.${todayStr},due_date.is.null`)
     .order("due_date", { ascending: true });
 
-  const schoolTasks = (schoolTasksRaw ?? []).filter(
-    (t) =>
-      !t.scheduled_days ||
-      t.scheduled_days.length === 0 ||
-      t.scheduled_days.includes(dayOfWeek)
+  const schoolTasks = (schoolTasksRaw ?? []).filter((t) =>
+    isScheduledForDay(t.scheduled_days, dayOfWeek)
   );
 
   // Filter taken assignments to only tasks in our family, and only tasks relevant today

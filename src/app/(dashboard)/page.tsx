@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { format, startOfMonth, endOfMonth, subMonths, subDays, differenceInDays, getDate, getDaysInMonth } from "date-fns";
+import { isScheduledForDay } from "@/lib/utils";
 
 import { debugLog } from "@/lib/debug-log";
 
@@ -230,11 +231,9 @@ export default async function DashboardPage() {
     .eq("status", "open")
     .or(`deadline.gte.${todayStr},deadline.is.null`);
 
-  const isTaskRelevantToday = (t: { recurring_daily?: boolean; scheduled_days?: number[] | null }) =>
+  const isTaskRelevantToday = (t: { recurring_daily?: boolean; scheduled_days?: (number | string)[] | null }) =>
     (t.recurring_daily === true) ||
-    !t.scheduled_days ||
-    t.scheduled_days.length === 0 ||
-    t.scheduled_days.includes(dayOfWeek);
+    isScheduledForDay(t.scheduled_days, dayOfWeek);
 
   const todayForDismissals = format(today, "yyyy-MM-dd");
   const { data: dismissalsRaw } = await supabase
@@ -265,12 +264,7 @@ export default async function DashboardPage() {
     .or(memberIds.length > 0 ? `member_id.in.(${memberIds.join(",")}),member_id.is.null` : "member_id.is.null");
 
   const sportActivities = (sportActivitiesRaw ?? [])
-    .filter(
-      (a) =>
-        !a.scheduled_days ||
-        a.scheduled_days.length === 0 ||
-        a.scheduled_days.includes(dayOfWeek)
-    )
+    .filter((a) => isScheduledForDay(a.scheduled_days, dayOfWeek))
     .filter((a) => !dismissedSet.has(`sport:${a.id}`))
     .sort((a, b) => {
       const aWeekly = a.type === "weekly" || (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;
@@ -291,12 +285,7 @@ export default async function DashboardPage() {
     .order("due_date", { ascending: true });
 
   const schoolTasks = (schoolTasksRaw ?? [])
-    .filter(
-      (t) =>
-        !t.scheduled_days ||
-        t.scheduled_days.length === 0 ||
-        t.scheduled_days.includes(dayOfWeek)
-    )
+    .filter((t) => isScheduledForDay(t.scheduled_days, dayOfWeek))
     .filter((t) => !dismissedSet.has(`school:${t.id}`))
     .sort((a, b) => {
     const aWeekly = (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;

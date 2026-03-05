@@ -59,7 +59,7 @@ export function PodiumLeaderboard({
     const prev = prevMonthScores[memberId] ?? 0;
     const currentDaily = (current / Math.max(1, currentMonthDaysElapsed)).toFixed(1);
     const prevDaily = (prev / Math.max(1, prevMonthDaysTotal)).toFixed(1);
-    return `This month: ${currentDaily} pts/day · Last month: ${prevDaily} pts/day`;
+    return `This month: ${currentDaily} pts/day\nLast month: ${prevDaily} pts/day`;
   }
 
   // Podium order: 2nd (left), 1st (center), 3rd (right) for top 3
@@ -148,7 +148,7 @@ export function PodiumLeaderboard({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 4 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute bottom-full left-1/2 z-[101] mb-1 -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      className="absolute bottom-full left-1/2 z-[101] mb-1 -translate-x-1/2 whitespace-pre-line rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-700 shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     >
                       {tooltip}
                     </motion.div>

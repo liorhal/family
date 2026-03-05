@@ -5,7 +5,7 @@ import { getDayName } from "@/lib/utils";
 
 interface DayCheckboxesProps {
   name?: string;
-  defaultDays?: number[];
+  defaultDays?: (number | string)[];
 }
 
 const DAYS = [0, 1, 2, 3, 4, 5, 6] as const;
@@ -24,7 +24,7 @@ export function DayCheckboxes({ name = "scheduled_days", defaultDays = [] }: Day
               type="checkbox"
               name={name}
               value={day}
-              defaultChecked={defaultDays.includes(day)}
+              defaultChecked={defaultDays.some((d) => Number(d) === day)}
               className="h-4 w-4 rounded border-slate-300"
             />
             {getDayName(day)}

@@ -313,3 +313,8 @@ CREATE POLICY "Family can manage dismissals" ON activity_dismissals FOR ALL
 -- ========== 00022_community_jar_settings.sql ==========
 ALTER TABLE families ADD COLUMN IF NOT EXISTS jar_target INTEGER DEFAULT 1500;
 ALTER TABLE families ADD COLUMN IF NOT EXISTS jar_prize TEXT DEFAULT '1,500 points = Family Movie Night 🍿';
+
+-- ========== 00024_dashboard_header_and_birthdays.sql ==========
+ALTER TABLE families ADD COLUMN IF NOT EXISTS dashboard_header TEXT;
+ALTER TABLE members ADD COLUMN IF NOT EXISTS birthday DATE;
+ALTER TYPE score_source_type ADD VALUE IF NOT EXISTS 'birthday_bonus';

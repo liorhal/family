@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getDayName, formatScore, cn } from "./utils";
+import { getDayName, formatScore, cn, isScheduledForDay } from "./utils";
 
 describe("getDayName", () => {
   it("returns correct day names for 0-6", () => {
@@ -22,6 +22,26 @@ describe("formatScore", () => {
   it("formats numbers with locale", () => {
     expect(formatScore(10)).toBe("10");
     expect(formatScore(1000)).toBe("1,000");
+  });
+});
+
+describe("isScheduledForDay", () => {
+  it("returns true when scheduled_days includes day (numbers)", () => {
+    expect(isScheduledForDay([4, 5], 4)).toBe(true);
+    expect(isScheduledForDay([4, 5], 5)).toBe(true);
+    expect(isScheduledForDay([4, 5], 3)).toBe(false);
+  });
+
+  it("returns true when scheduled_days includes day (strings from DB)", () => {
+    expect(isScheduledForDay(["4", "5"], 4)).toBe(true);
+    expect(isScheduledForDay(["4", "5"], 5)).toBe(true);
+    expect(isScheduledForDay(["4", "5"], 3)).toBe(false);
+  });
+
+  it("returns true for empty or null (no day restriction)", () => {
+    expect(isScheduledForDay(null, 4)).toBe(true);
+    expect(isScheduledForDay([], 4)).toBe(true);
+    expect(isScheduledForDay(undefined, 4)).toBe(true);
   });
 });
 
