@@ -146,8 +146,10 @@ export default async function DashboardPage() {
     .in("member_id", (members ?? []).map((m) => m.id))
     .gte("created_at", twoYearsAgo);
   const monthlyTotals: Record<string, number> = {};
+  const currentMonthKey = format(now, "yyyy-MM");
   for (const s of scoresForBestMonth ?? []) {
     const monthKey = format(new Date(s.created_at), "yyyy-MM");
+    if (monthKey === currentMonthKey) continue; // Exclude ongoing month
     const delta = s.source_type === "fine" ? -s.score_delta : s.score_delta;
     monthlyTotals[monthKey] = (monthlyTotals[monthKey] ?? 0) + delta;
   }

@@ -132,7 +132,7 @@ export function AdminSport({ activities, members }: AdminSportProps) {
       <div className="space-y-2">
           <p className="text-sm font-medium">Activities</p>
           <ul className="space-y-2">
-            {activities.slice(0, 10).map((a) => (
+            {activities.map((a) => (
               <li key={a.id} className="space-y-2">
                 {editingId === a.id ? (
                   <form

@@ -139,7 +139,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
       <div className="space-y-2">
           <p className="text-sm font-medium">School tasks</p>
           <ul className="space-y-2">
-            {tasks.slice(0, 10).map((t) => (
+            {tasks.map((t) => (
               <li key={t.id} className="space-y-2">
                 {editingId === t.id ? (
                   <form
