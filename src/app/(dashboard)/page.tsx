@@ -28,6 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = family?.name ? `${family.name} Family Dashboard` : "Family Dashboard";
   return { title };
 }
+import { resetWeeklyCompletions } from "@/app/actions";
 import { ActivityLog } from "@/components/dashboard/ActivityLog";
 import { CommunityJar } from "@/components/dashboard/CommunityJar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -218,6 +219,9 @@ export default async function DashboardPage() {
   const today = new Date();
   const dayOfWeek = today.getDay();
   const todayStr = format(today, "yyyy-MM-dd");
+
+  // Reset: Thu task completed last Thu → available again this Thu. Respect due_date/deadline.
+  await resetWeeklyCompletions(dayOfWeek, todayStr);
 
   const { data: takenAssignments } = await supabase
     .from("task_assignments")

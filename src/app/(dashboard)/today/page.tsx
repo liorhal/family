@@ -1,3 +1,4 @@
+import { resetWeeklyCompletions } from "@/app/actions";
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
 import { isScheduledForDay } from "@/lib/utils";
@@ -25,6 +26,9 @@ export default async function TodayPage() {
   const today = new Date();
   const dayOfWeek = today.getDay();
   const todayStr = format(today, "yyyy-MM-dd");
+
+  // Reset: Thu task completed last Thu → available again this Thu. Respect due_date/deadline.
+  await resetWeeklyCompletions(dayOfWeek, todayStr);
 
   // All taken tasks (any family member) - family-wide view
   const { data: takenAssignments } = await supabase

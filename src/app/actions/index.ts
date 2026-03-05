@@ -2,6 +2,52 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { startOfDay } from "date-fns";
+
+/** Reset completed_at for sport/school activities when we've reached the next occurrence of their scheduled day.
+ * E.g. task scheduled Thu: complete Thu → available again next Thu, not before.
+ * Activities with due_date/deadline past today are not reset (not available beyond that date). RLS scopes to family. */
+export async function resetWeeklyCompletions(dayOfWeek: number, todayStr: string) {
+  const { member, familyId } = await getCurrentMember();
+  if (!member || !familyId) return;
+
+  const supabase = await createClient();
+  const startOfToday = startOfDay(new Date()).toISOString();
+
+  // Sport: reset only if TODAY is in scheduled_days (so Thu task resets on Thu, not Mon)
+  const { data: sportCompleted } = await supabase
+    .from("sport_activities")
+    .select("id, type, scheduled_days")
+    .not("completed_at", "is", null)
+    .lt("completed_at", startOfToday);
+  for (const a of sportCompleted ?? []) {
+    const isWeekly = a.type === "weekly";
+    const hasScheduledDays = a.scheduled_days && a.scheduled_days.length > 0;
+    const todayIsScheduled =
+      hasScheduledDays &&
+      a.scheduled_days!.some((d: number | string) => Number(d) === dayOfWeek);
+    if ((isWeekly || hasScheduledDays) && todayIsScheduled) {
+      await supabase.from("sport_activities").update({ completed_at: null }).eq("id", a.id);
+    }
+  }
+
+  // School: reset only if today in scheduled_days AND (no due_date OR due_date >= today)
+  const { data: schoolCompleted } = await supabase
+    .from("school_tasks")
+    .select("id, scheduled_days, due_date")
+    .not("completed_at", "is", null)
+    .lt("completed_at", startOfToday)
+    .or(`due_date.is.null,due_date.gte.${todayStr}`);
+  for (const t of schoolCompleted ?? []) {
+    const hasScheduledDays = t.scheduled_days && t.scheduled_days.length > 0;
+    const todayIsScheduled =
+      hasScheduledDays &&
+      t.scheduled_days!.some((d: number | string) => Number(d) === dayOfWeek);
+    if (todayIsScheduled) {
+      await supabase.from("school_tasks").update({ completed_at: null }).eq("id", t.id);
+    }
+  }
+}
 
 /** Get current user's member record and family */
 async function getCurrentMember() {
