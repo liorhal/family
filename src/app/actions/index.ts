@@ -798,7 +798,7 @@ export async function getBadgeProgress(memberId: string): Promise<{ error?: stri
 }
 
 /** Returns badges just earned (rawCurrent === threshold). Records in badge_earnings, awards 5pt for master_of_task only. */
-async function getNewlyEarnedBadges(memberId: string): Promise<{ title: string }[]> {
+async function getNewlyEarnedBadges(memberId: string): Promise<{ title: string; description: string }[]> {
   const raw = await getBadgeProgressRaw(memberId);
   if (!raw) return [];
 
