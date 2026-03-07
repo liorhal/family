@@ -47,7 +47,8 @@ export interface TaskAssignment {
 
 export interface SportActivity {
   id: string;
-  member_id: string;
+  member_id: string | null;
+  family_id?: string | null;
   title: string;
   type: SportType;
   scheduled_days: number[];

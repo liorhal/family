@@ -1102,6 +1102,7 @@ export async function createSportActivity(formData: FormData) {
 
   const { error } = await supabase.from("sport_activities").insert({
     member_id: targetMemberId || null,
+    family_id: familyId,
     title,
     type,
     scheduled_days,
@@ -1144,6 +1145,7 @@ export async function updateSportActivity(activityId: string, formData: FormData
     .from("sport_activities")
     .update({
       member_id: targetMemberId || null,
+      family_id: familyId,
       title,
       type,
       scheduled_days,
