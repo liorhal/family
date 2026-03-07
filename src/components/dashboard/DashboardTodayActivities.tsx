@@ -17,6 +17,7 @@ import {
   completeSportActivity,
   completeSchoolTask,
   dismissActivityFromToday,
+  type NewlyEarnedBadge,
 } from "@/app/actions";
 import { MemberAvatar } from "@/components/MemberAvatar";
 import { MemberAvatarPicker } from "@/components/MemberAvatarPicker";
@@ -131,7 +132,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: res.newlyEarnedBadges.map((b) => ({ title: b.title, description: b.description })),
+          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -160,7 +161,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: res.newlyEarnedBadges.map((b) => ({ title: b.title, description: b.description })),
+          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -186,7 +187,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: res.newlyEarnedBadges.map((b) => ({ title: b.title, description: b.description })),
+          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -217,7 +218,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: res.newlyEarnedBadges.map((b) => ({ title: b.title, description: b.description })),
+          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();

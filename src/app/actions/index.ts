@@ -802,8 +802,11 @@ export async function getBadgeProgress(memberId: string): Promise<{ error?: stri
   return { data: result };
 }
 
+/** Badge returned when just earned (used by completion actions) */
+export type NewlyEarnedBadge = { title: string; description: string };
+
 /** Returns badges just earned (rawCurrent === threshold). Records in badge_earnings, awards 5pt for master_of_task only. */
-async function getNewlyEarnedBadges(memberId: string): Promise<{ title: string; description: string }[]> {
+async function getNewlyEarnedBadges(memberId: string): Promise<NewlyEarnedBadge[]> {
   const raw = await getBadgeProgressRaw(memberId);
   if (!raw) return [];
 
