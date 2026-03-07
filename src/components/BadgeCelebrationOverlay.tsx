@@ -4,9 +4,14 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Award } from "lucide-react";
 
+interface BadgeItem {
+  title: string;
+  description: string;
+}
+
 interface BadgeCelebrationOverlayProps {
   memberName: string;
-  badgeTitles: string[];
+  badges: BadgeItem[];
   onComplete?: () => void;
 }
 
@@ -14,7 +19,7 @@ const DURATION_MS = 3500;
 
 export function BadgeCelebrationOverlay({
   memberName,
-  badgeTitles,
+  badges,
   onComplete,
 }: BadgeCelebrationOverlayProps) {
   const [visible, setVisible] = useState(true);
@@ -54,19 +59,24 @@ export function BadgeCelebrationOverlay({
               </div>
               <div>
                 <p className="text-lg font-bold text-amber-900 dark:text-amber-100">
-                  Badge{badgeTitles.length > 1 ? "s" : ""} earned!
+                  Badge{badges.length > 1 ? "s" : ""} earned!
                 </p>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   {memberName}
                 </p>
               </div>
-              <ul className="space-y-1">
-                {badgeTitles.map((title) => (
+              <ul className="space-y-2">
+                {badges.map((b) => (
                   <li
-                    key={title}
-                    className="text-base font-semibold text-amber-800 dark:text-amber-200"
+                    key={b.title}
+                    className="text-left"
                   >
-                    {title}
+                    <span className="text-base font-semibold text-amber-800 dark:text-amber-200">
+                      {b.title}
+                    </span>
+                    <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
+                      {b.description}
+                    </p>
                   </li>
                 ))}
               </ul>

@@ -97,7 +97,7 @@ export function DashboardTodayActivities({
   const [sportCompleterForActivity, setSportCompleterForActivity] = useState<Record<string, string>>({});
   const [schoolCompleterForTask, setSchoolCompleterForTask] = useState<Record<string, string>>({});
   const [celebrationMember, setCelebrationMember] = useState<Member | null>(null);
-  const [badgeCelebration, setBadgeCelebration] = useState<{ memberName: string; badgeTitles: string[] } | null>(null);
+  const [badgeCelebration, setBadgeCelebration] = useState<{ memberName: string; badges: { title: string; description: string }[] } | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
 
   const getMember = (id: string) => members.find((m) => m.id === id);
@@ -131,7 +131,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badgeTitles: res.newlyEarnedBadges.map((b) => b.title),
+          badges: res.newlyEarnedBadges.map((b) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -160,7 +160,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badgeTitles: res.newlyEarnedBadges.map((b) => b.title),
+          badges: res.newlyEarnedBadges.map((b) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -186,7 +186,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badgeTitles: res.newlyEarnedBadges.map((b) => b.title),
+          badges: res.newlyEarnedBadges.map((b) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -217,7 +217,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badgeTitles: res.newlyEarnedBadges.map((b) => b.title),
+          badges: res.newlyEarnedBadges.map((b) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -247,7 +247,7 @@ export function DashboardTodayActivities({
       {badgeCelebration && (
         <BadgeCelebrationOverlay
           memberName={badgeCelebration.memberName}
-          badgeTitles={badgeCelebration.badgeTitles}
+          badges={badgeCelebration.badges}
           onComplete={() => setBadgeCelebration(null)}
         />
       )}

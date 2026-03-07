@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { startOfDay } from "date-fns";
 
-/** Reset completed_at for sport/school activities when we've reached the next occurrence of their scheduled day.
+/** Reset completed_at for sport/school activities and house tasks when we've reached the next occurrence of their scheduled day.
  * E.g. task scheduled Thu: complete Thu → available again next Thu, not before.
  * Activities with due_date/deadline past today are not reset (not available beyond that date). RLS scopes to family. */
 export async function resetWeeklyCompletions(dayOfWeek: number, todayStr: string) {
@@ -13,6 +13,32 @@ export async function resetWeeklyCompletions(dayOfWeek: number, todayStr: string
 
   const supabase = await createClient();
   const startOfToday = startOfDay(new Date()).toISOString();
+
+  // House tasks: reset weekly tasks (scheduled_days) when today is a scheduled day and completion was before today
+  const { data: houseCompleted } = await supabase
+    .from("tasks")
+    .select("id, scheduled_days, deadline")
+    .eq("family_id", familyId)
+    .eq("status", "completed")
+    .or(`deadline.gte.${todayStr},deadline.is.null`);
+  for (const t of houseCompleted ?? []) {
+    const hasScheduledDays = t.scheduled_days && t.scheduled_days.length > 0;
+    const todayIsScheduled =
+      hasScheduledDays &&
+      t.scheduled_days!.some((d: number | string) => Number(d) === dayOfWeek);
+    if (!todayIsScheduled) continue;
+    const { data: assignment } = await supabase
+      .from("task_assignments")
+      .select("id")
+      .eq("task_id", t.id)
+      .lt("completed_at", startOfToday)
+      .limit(1)
+      .maybeSingle();
+    if (assignment) {
+      await supabase.from("task_assignments").delete().eq("task_id", t.id);
+      await supabase.from("tasks").update({ status: "open" }).eq("id", t.id);
+    }
+  }
 
   // Sport: reset only if TODAY is in scheduled_days (so Thu task resets on Thu, not Mon)
   const { data: sportCompleted } = await supabase
@@ -796,12 +822,12 @@ async function getNewlyEarnedBadges(memberId: string): Promise<{ title: string }
         source_type: "bonus",
         source_id: null,
         score_delta: 5,
-        description: `Badge: ${p.title}`,
+        description: `Badge: ${p.title} – ${p.description}`,
       });
     }
   }
 
-  return newlyEarned.map((p) => ({ title: p.title }));
+  return newlyEarned.map((p) => ({ title: p.title, description: p.description }));
 }
 
 export interface FamilyBadgeEntry extends BadgeProgress {
