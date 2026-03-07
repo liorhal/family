@@ -301,7 +301,7 @@ export async function completeTask(taskId: string) {
 
   const { data: task } = await supabase
     .from("tasks")
-    .select("id, score_value, deadline, status, recurring_daily")
+    .select("id, score_value, deadline, status, recurring_daily, scheduled_days")
     .eq("id", taskId)
     .single();
 
@@ -327,7 +327,8 @@ export async function completeTask(taskId: string) {
     .update({ completed_at: now })
     .eq("task_id", taskId);
 
-  // 2. If recurring_daily: reset task for tomorrow. Else: mark as completed.
+  // 2. If recurring_daily: reset for tomorrow. If weekly (scheduled_days): keep open for same day. Else: mark completed.
+  const isWeekly = task.scheduled_days && task.scheduled_days.length > 0;
   if (task.recurring_daily) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -336,6 +337,10 @@ export async function completeTask(taskId: string) {
       .from("tasks")
       .update({ status: "open", deadline: tomorrowDate })
       .eq("id", taskId);
+    await supabase.from("task_assignments").delete().eq("task_id", taskId);
+  } else if (isWeekly) {
+    // Weekly task: keep open so it stays available on its scheduled days
+    await supabase.from("tasks").update({ status: "open" }).eq("id", taskId);
     await supabase.from("task_assignments").delete().eq("task_id", taskId);
   } else {
     await supabase.from("tasks").update({ status: "completed" }).eq("id", taskId);
@@ -815,16 +820,15 @@ async function getNewlyEarnedBadges(memberId: string): Promise<{ title: string; 
       { member_id: memberId, badge_id: p.badgeId, earned_at: now },
       { onConflict: "member_id,badge_id" }
     );
-    // 5pt bonus for master_of_task only (avoid double reward with 7/14/21 streak bonus)
-    if (p.type === "master_of_task") {
-      await supabase.from("scores_log").insert({
-        member_id: memberId,
-        source_type: "bonus",
-        source_id: null,
-        score_delta: 5,
-        description: `Badge: ${p.title} – ${p.description}`,
-      });
-    }
+    // Log all badges to activity log. 5pt bonus for all badge types
+    const scoreDelta = 5;
+    await supabase.from("scores_log").insert({
+      member_id: memberId,
+      source_type: "bonus",
+      source_id: null,
+      score_delta: scoreDelta,
+      description: `Badge: ${p.title} – ${p.description}`,
+    });
   }
 
   return newlyEarned.map((p) => ({ title: p.title, description: p.description }));
