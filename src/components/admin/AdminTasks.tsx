@@ -111,7 +111,7 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="deadline">Due date (optional)</Label>
-              <Input id="deadline" name="deadline" type="date" />
+              <Input id="deadline" name="deadline" type="date" defaultValue="" />
               <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm">
                 <input
                   type="checkbox"

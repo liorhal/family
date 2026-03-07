@@ -106,8 +106,8 @@ export async function createTask(formData: FormData) {
   const supabase = await createClient();
   const title = formData.get("title") as string;
   const description = (formData.get("description") as string) || null;
-  const deadlineRaw = formData.get("deadline") as string;
-  let deadline = deadlineRaw || null;
+  const deadlineStr = String(formData.get("deadline") ?? "").trim();
+  let deadline: string | null = deadlineStr === "" ? null : deadlineStr;
   const recurring_daily = formData.get("recurring_daily") === "on" || formData.get("recurring_daily") === "true";
   if (recurring_daily && !deadline) {
     deadline = new Date().toISOString().split("T")[0];
@@ -150,8 +150,8 @@ export async function updateTask(taskId: string, formData: FormData) {
   const supabase = await createClient();
   const title = formData.get("title") as string;
   const description = (formData.get("description") as string) || null;
-  const deadlineRaw = (formData.get("deadline") as string)?.trim() || "";
-  let deadline: string | null = deadlineRaw || null;
+  const deadlineStr = String(formData.get("deadline") ?? "").trim();
+  let deadline: string | null = deadlineStr === "" ? null : deadlineStr;
   const recurring_daily = formData.get("recurring_daily") === "on" || formData.get("recurring_daily") === "true";
   if (recurring_daily && !deadline) {
     deadline = new Date().toISOString().split("T")[0];
