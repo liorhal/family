@@ -1253,6 +1253,7 @@ export async function updateSchoolTask(taskId: string, formData: FormData) {
     .from("school_tasks")
     .update({
       member_id: targetMemberId,
+      family_id: familyId,
       title,
       type,
       due_date,
