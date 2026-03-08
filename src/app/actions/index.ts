@@ -47,12 +47,14 @@ export async function resetWeeklyCompletions(dayOfWeek: number, todayStr: string
     .not("completed_at", "is", null)
     .lt("completed_at", startOfToday);
   for (const a of sportCompleted ?? []) {
+    const isExtra = a.type === "extra";
     const isWeekly = a.type === "weekly";
     const hasScheduledDays = a.scheduled_days && a.scheduled_days.length > 0;
     const todayIsScheduled =
       hasScheduledDays &&
       a.scheduled_days!.some((d: number | string) => Number(d) === dayOfWeek);
-    if ((isWeekly || hasScheduledDays) && todayIsScheduled) {
+    // Extras always stay available; weekly resets on scheduled day
+    if (isExtra || ((isWeekly || hasScheduledDays) && todayIsScheduled)) {
       await supabase.from("sport_activities").update({ completed_at: null }).eq("id", a.id);
     }
   }
@@ -379,10 +381,9 @@ export async function completeSportActivity(activityId: string, completingMember
 
   if (!activity) return { error: "Activity not found" };
 
-  // Extra activities with no weekly schedule can be completed multiple times per day
-  const isAlwaysAvailable =
-    activity.type === "extra" && (!activity.scheduled_days || activity.scheduled_days.length === 0);
-  if (!isAlwaysAvailable && activity.completed_at) {
+  // Extra activities stay available after completion (can be completed multiple times)
+  const isExtra = activity.type === "extra";
+  if (!isExtra && activity.completed_at) {
     return { error: "Activity already completed" };
   }
 
@@ -410,8 +411,8 @@ export async function completeSportActivity(activityId: string, completingMember
 
   const now = new Date().toISOString();
 
-  // Only set completed_at for scheduled activities; always-available extras stay open for repeat completions
-  if (!isAlwaysAvailable) {
+  // Only set completed_at for weekly activities; extras stay open for repeat completions
+  if (!isExtra) {
     await supabase
       .from("sport_activities")
       .update({ completed_at: now })
