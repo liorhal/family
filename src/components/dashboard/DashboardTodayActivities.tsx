@@ -132,7 +132,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
+          badges: res.newlyEarnedBadges.map((b: NewlyEarnedBadge) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -161,7 +161,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
+          badges: res.newlyEarnedBadges.map((b: NewlyEarnedBadge) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -187,7 +187,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
+          badges: res.newlyEarnedBadges.map((b: NewlyEarnedBadge) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -218,7 +218,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
+          badges: res.newlyEarnedBadges.map((b: NewlyEarnedBadge) => ({ title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
