@@ -598,16 +598,6 @@ async function updateStreak(memberId: string, familyId: string) {
 
   longest_streak = Math.max(longest_streak, current_streak);
 
-  // Streak bonus: 7-day streak = 10 extra points
-  if (current_streak > 0 && current_streak % 7 === 0 && lastDate !== today) {
-    await supabase.from("scores_log").insert({
-      member_id: memberId,
-      source_type: "streak_bonus",
-      source_id: null,
-      score_delta: 10,
-    });
-  }
-
   await supabase.from("streaks").upsert(
     {
       member_id: memberId,
@@ -813,8 +803,17 @@ async function getNewlyEarnedBadges(memberId: string): Promise<NewlyEarnedBadge[
 
   const supabase = await createClient();
 
-  // Newly earned = exactly at threshold this completion (avoids "7 of 5" false positives)
-  const newlyEarned = raw.filter((p) => p.earned && p.rawCurrent === p.threshold);
+  // Exclude badges already earned (prevents re-showing same badge when completing different tasks)
+  const { data: existingEarnings } = await supabase
+    .from("badge_earnings")
+    .select("badge_id")
+    .eq("member_id", memberId);
+  const alreadyEarnedIds = new Set((existingEarnings ?? []).map((e) => e.badge_id));
+
+  // Newly earned = exactly at threshold, not already in badge_earnings
+  const newlyEarned = raw.filter(
+    (p) => p.earned && p.rawCurrent === p.threshold && !alreadyEarnedIds.has(p.badgeId)
+  );
   if (newlyEarned.length === 0) return [];
 
   const now = new Date().toISOString();
