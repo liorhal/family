@@ -108,12 +108,8 @@ export async function createTask(formData: FormData) {
   const supabase = await createClient();
   const title = formData.get("title") as string;
   const description = (formData.get("description") as string) || null;
-  const deadlineStr = String(formData.get("deadline") ?? "").trim();
-  let deadline: string | null = deadlineStr === "" ? null : deadlineStr;
   const recurring_daily = formData.get("recurring_daily") === "on" || formData.get("recurring_daily") === "true";
-  if (recurring_daily && !deadline) {
-    deadline = new Date().toISOString().split("T")[0];
-  }
+  const deadline: string | null = null;
   const default_assignee_id = (formData.get("default_assignee_id") as string) || null;
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
@@ -152,12 +148,8 @@ export async function updateTask(taskId: string, formData: FormData) {
   const supabase = await createClient();
   const title = formData.get("title") as string;
   const description = (formData.get("description") as string) || null;
-  const deadlineStr = String(formData.get("deadline") ?? "").trim();
-  let deadline: string | null = deadlineStr === "" ? null : deadlineStr;
   const recurring_daily = formData.get("recurring_daily") === "on" || formData.get("recurring_daily") === "true";
-  if (recurring_daily && !deadline) {
-    deadline = new Date().toISOString().split("T")[0];
-  }
+  const deadline: string | null = null;
   const default_assignee_id = (formData.get("default_assignee_id") as string) || null;
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
@@ -794,9 +786,9 @@ export async function getBadgeProgress(memberId: string): Promise<{ error?: stri
 }
 
 /** Badge returned when just earned (used by completion actions) */
-export type NewlyEarnedBadge = { title: string; description: string };
+export type NewlyEarnedBadge = { badgeId: string; title: string; description: string };
 
-/** Returns badges just earned (rawCurrent === threshold). Records in badge_earnings, awards 5pt for master_of_task only. */
+/** Returns badges just earned (rawCurrent === threshold). Records in badge_earnings, awards 5pt for all badge types. */
 async function getNewlyEarnedBadges(memberId: string): Promise<NewlyEarnedBadge[]> {
   const raw = await getBadgeProgressRaw(memberId);
   if (!raw) return [];
@@ -816,9 +808,17 @@ async function getNewlyEarnedBadges(memberId: string): Promise<NewlyEarnedBadge[
   );
   if (newlyEarned.length === 0) return [];
 
+  // Deduplicate by badgeId (each badge can only show once)
+  const seen = new Set<string>();
+  const uniqueNewlyEarned = newlyEarned.filter((p) => {
+    if (seen.has(p.badgeId)) return false;
+    seen.add(p.badgeId);
+    return true;
+  });
+
   const now = new Date().toISOString();
 
-  for (const p of newlyEarned) {
+  for (const p of uniqueNewlyEarned) {
     await supabase.from("badge_earnings").upsert(
       { member_id: memberId, badge_id: p.badgeId, earned_at: now },
       { onConflict: "member_id,badge_id" }
@@ -834,7 +834,7 @@ async function getNewlyEarnedBadges(memberId: string): Promise<NewlyEarnedBadge[
     });
   }
 
-  return newlyEarned.map((p) => ({ title: p.title, description: p.description }));
+  return uniqueNewlyEarned.map((p) => ({ badgeId: p.badgeId, title: p.title, description: p.description }));
 }
 
 export interface FamilyBadgeEntry extends BadgeProgress {
@@ -1192,8 +1192,7 @@ export async function createSchoolTask(formData: FormData) {
   const targetMemberId = memberIdRaw && memberIdRaw.trim() !== "" ? memberIdRaw : null;
   const title = formData.get("title") as string;
   const type = (formData.get("type") as "homework" | "exam" | "project" | "research") || "homework";
-  const dueDateRaw = formData.get("due_date") as string;
-  const due_date = dueDateRaw && dueDateRaw.trim() !== "" ? dueDateRaw : null;
+  const due_date = null;
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
   const scheduled_days: number[] | null = Array.isArray(scheduledDaysRaw) && scheduledDaysRaw.length > 0
@@ -1236,8 +1235,7 @@ export async function updateSchoolTask(taskId: string, formData: FormData) {
   const targetMemberId = memberIdRaw && memberIdRaw.trim() !== "" ? memberIdRaw : null;
   const title = formData.get("title") as string;
   const type = (formData.get("type") as "homework" | "exam" | "project" | "research") || "homework";
-  const dueDateRaw = formData.get("due_date") as string;
-  const due_date = dueDateRaw && dueDateRaw.trim() !== "" ? dueDateRaw : null;
+  const due_date = null;
   const score_value = Math.max(0, parseInt(formData.get("score_value") as string) || 10);
   const scheduledDaysRaw = formData.getAll("scheduled_days");
   const scheduled_days: number[] | null = Array.isArray(scheduledDaysRaw) && scheduledDaysRaw.length > 0

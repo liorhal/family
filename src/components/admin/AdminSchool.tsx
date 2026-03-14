@@ -97,7 +97,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
             <p className="text-sm text-slate-500">Recurring days (optional) – appears on Today on these days. Leave empty for one-off.</p>
             <DayCheckboxes name="scheduled_days" />
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
               <select
@@ -110,10 +110,6 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                 <option value="project">Project</option>
                 <option value="research">Research</option>
               </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="due_date">Due date (optional)</Label>
-              <Input id="due_date" name="due_date" type="date" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="score_value">Score</Label>
@@ -171,7 +167,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                     <div className="mt-3">
                       <DayCheckboxes name="scheduled_days" defaultDays={t.scheduled_days ?? []} />
                     </div>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
                         <Label>Type</Label>
                         <select
@@ -184,10 +180,6 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                           <option value="project">Project</option>
                           <option value="research">Research</option>
                         </select>
-                      </div>
-                      <div className="space-y-1">
-                        <Label>Due date (optional)</Label>
-                        <Input name="due_date" type="date" defaultValue={t.due_date ?? ""} />
                       </div>
                       <div className="space-y-1">
                         <Label>Score</Label>
@@ -215,7 +207,7 @@ export function AdminSchool({ tasks, members }: AdminSchoolProps) {
                       )}
                     </div>
                     <span className="shrink-0 text-sm text-slate-500">
-                      {t.member_id ? members.find((m) => m.id === t.member_id)?.name ?? "—" : "No default"} · {t.due_date ?? "—"}
+                      {t.member_id ? members.find((m) => m.id === t.member_id)?.name ?? "—" : "No default"}
                     </span>
                     <div className="flex shrink-0 gap-1">
                     <Button

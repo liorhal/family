@@ -109,18 +109,14 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
             <DayCheckboxes name="scheduled_days" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="deadline">Due date (optional)</Label>
-              <Input id="deadline" name="deadline" type="date" defaultValue="" />
-              <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  name="recurring_daily"
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                Always open – resets to tomorrow when completed
-              </label>
-            </div>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="recurring_daily"
+                className="h-4 w-4 rounded border-slate-300"
+              />
+              Always open – resets to tomorrow when completed
+            </label>
             <FormMemberSelect
               members={members}
               name="default_assignee_id"
@@ -174,19 +170,15 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
                       <DayCheckboxes name="scheduled_days" defaultDays={t.scheduled_days ?? []} />
                     </div>
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <div className="space-y-1">
-                        <Label>Due date</Label>
-                        <Input name="deadline" type="date" defaultValue={t.deadline ?? ""} />
-                        <label className="mt-1 flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            name="recurring_daily"
-                            defaultChecked={t.recurring_daily}
-                            className="h-4 w-4 rounded border-slate-300"
-                          />
-                          Always open
-                        </label>
-                      </div>
+                      <label className="flex cursor-pointer items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          name="recurring_daily"
+                          defaultChecked={t.recurring_daily}
+                          className="h-4 w-4 rounded border-slate-300"
+                        />
+                        Always open
+                      </label>
                       <FormMemberSelect
                         members={members}
                         name="default_assignee_id"

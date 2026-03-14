@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Award } from "lucide-react";
 
 interface BadgeItem {
+  badgeId?: string;
   title: string;
   description: string;
 }
@@ -66,9 +67,9 @@ export function BadgeCelebrationOverlay({
                 </p>
               </div>
               <ul className="space-y-2">
-                {badges.map((b) => (
+                {badges.map((b, i) => (
                   <li
-                    key={b.title}
+                    key={b.badgeId ?? `${b.title}-${b.description}`}
                     className="text-left"
                   >
                     <span className="text-base font-semibold text-amber-800 dark:text-amber-200">

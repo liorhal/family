@@ -132,7 +132,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
+          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ badgeId: b.badgeId, title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -161,7 +161,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
+          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ badgeId: b.badgeId, title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -187,7 +187,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
+          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ badgeId: b.badgeId, title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -218,7 +218,7 @@ export function DashboardTodayActivities({
       if ("newlyEarnedBadges" in res && res.newlyEarnedBadges?.length && member) {
         setBadgeCelebration({
           memberName: member.name,
-          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ title: b.title, description: b.description })),
+          badges: (res.newlyEarnedBadges as NewlyEarnedBadge[]).map((b) => ({ badgeId: b.badgeId, title: b.title, description: b.description })),
         });
       }
       playSuccessSound();
@@ -480,7 +480,6 @@ export function DashboardTodayActivities({
                         <p className="font-semibold">{t.title}</p>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
                           <Badge variant="school" className="text-xs">+{t.score_value}</Badge>
-                          {t.due_date && <Badge variant="default" className="text-xs">{t.due_date}</Badge>}
                           {m && (
                             <span className="flex items-center gap-1 text-xs text-slate-600">
                               <MemberAvatar name={m.name} avatarUrl={m.avatar_url} size="sm" />
