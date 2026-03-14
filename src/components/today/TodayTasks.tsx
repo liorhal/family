@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   takeAndCompleteTask,
+  completeOpenTaskDirectly,
   releaseTask,
   completeTask,
   completeSportActivity,
@@ -35,6 +36,7 @@ interface OpenTask {
   id: string;
   title: string;
   score_value: number;
+  default_assignee_id?: string | null;
 }
 
 interface SportActivity {
@@ -94,14 +96,16 @@ export function TodayTasks({
 
   const getMember = (id: string) => members.find((m) => m.id === id);
 
-  async function handleTakeAndComplete(taskId: string) {
+  async function handleTakeAndComplete(taskId: string, hasDefaultAssignee: boolean) {
     const assigneeId = assigneeForTask[taskId];
     if (!assigneeId) {
       alert("Select who will complete this task");
       return;
     }
     setCompleting(taskId);
-    const res = await takeAndCompleteTask(taskId, assigneeId);
+    const res = hasDefaultAssignee
+      ? await takeAndCompleteTask(taskId, assigneeId)
+      : await completeOpenTaskDirectly(taskId, assigneeId);
     setCompleting(null);
     setAssigneeForTask((p) => {
       const next = { ...p };
@@ -344,7 +348,7 @@ export function TodayTasks({
                   <Button
                     variant="success"
                     size="lg"
-                    onClick={() => handleTakeAndComplete(t.id)}
+                    onClick={() => handleTakeAndComplete(t.id, !!t.default_assignee_id)}
                     disabled={completing === t.id || !assigneeForTask[t.id]}
                   >
                     {completing === t.id ? (

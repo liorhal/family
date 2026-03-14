@@ -215,15 +215,18 @@ export async function takeTask(taskId: string, assigneeId: string) {
     .single();
   if (!assignee) return { error: "Invalid assignee" };
 
-  // Verify task exists, is open, and belongs to family
+  // Verify task exists, is open, belongs to family, and has a default assignee (tasks can only be taken if defined with assignee)
   const { data: task, error: taskError } = await supabase
     .from("tasks")
-    .select("id, status, family_id")
+    .select("id, status, family_id, default_assignee_id")
     .eq("id", taskId)
     .single();
 
   if (taskError || !task || task.family_id !== familyId || task.status !== "open") {
     return { error: "Task not available" };
+  }
+  if (!task.default_assignee_id) {
+    return { error: "This task cannot be taken – it has no default assignee. Complete it directly instead." };
   }
 
   const { error: assignError } = await supabase.from("task_assignments").insert({
@@ -232,23 +235,20 @@ export async function takeTask(taskId: string, assigneeId: string) {
   });
 
   if (assignError) {
-    if (assignError.code === "23505") return { error: "Task already taken" };
+    if (assignError.code === "23505") {
+      revalidatePath("/");
+      revalidatePath("/today");
+      return { error: "This task was just taken by another family member. Refresh the page to see the update." };
+    }
     return { error: assignError.message };
   }
-
-  const { error: updateError } = await supabase
-    .from("tasks")
-    .update({ status: "taken" })
-    .eq("id", taskId);
-
-  if (updateError) return { error: updateError.message };
 
   revalidatePath("/");
   revalidatePath("/today");
   return { success: true };
 }
 
-/** Release a taken task (put back to open) */
+/** Release an assigned task (put back to open) */
 export async function releaseTask(taskId: string) {
   const { member, familyId } = await getCurrentMember();
   if (!member || !familyId) return { error: "Unauthorized" };
@@ -257,12 +257,23 @@ export async function releaseTask(taskId: string) {
 
   const { data: task } = await supabase
     .from("tasks")
-    .select("id, status, family_id")
+    .select("id, family_id")
     .eq("id", taskId)
     .single();
 
-  if (!task || task.family_id !== familyId || task.status !== "taken") {
+  if (!task || task.family_id !== familyId) {
     return { error: "Task not available" };
+  }
+
+  const { data: assignment } = await supabase
+    .from("task_assignments")
+    .select("id")
+    .eq("task_id", taskId)
+    .is("completed_at", null)
+    .maybeSingle();
+
+  if (!assignment) {
+    return { error: "Task not assigned" };
   }
 
   await supabase.from("task_assignments").delete().eq("task_id", taskId);
@@ -273,10 +284,47 @@ export async function releaseTask(taskId: string) {
   return { success: true };
 }
 
-/** Take an open task and complete it in one action (assign + complete) */
+/** Take an open task and complete it in one action (assign + complete). Only for tasks with default_assignee_id. */
 export async function takeAndCompleteTask(taskId: string, assigneeId: string) {
   const takeRes = await takeTask(taskId, assigneeId);
   if (takeRes.error) return takeRes;
+  return completeTask(taskId);
+}
+
+/** Complete an open task directly (no take step). Only for tasks without default_assignee_id. */
+export async function completeOpenTaskDirectly(taskId: string, completingMemberId: string) {
+  const { member, familyId } = await getCurrentMember();
+  if (!member || !familyId) return { error: "Unauthorized" };
+
+  const supabase = await createClient();
+
+  const { data: assignee } = await supabase
+    .from("members")
+    .select("id")
+    .eq("id", completingMemberId)
+    .eq("family_id", familyId)
+    .single();
+  if (!assignee) return { error: "Invalid assignee" };
+
+  const { data: task, error: taskError } = await supabase
+    .from("tasks")
+    .select("id, status, family_id, default_assignee_id")
+    .eq("id", taskId)
+    .single();
+
+  if (taskError || !task || task.family_id !== familyId || task.status !== "open") {
+    return { error: "Task not available" };
+  }
+  if (task.default_assignee_id) {
+    return { error: "This task has a default assignee – use Take & Complete instead." };
+  }
+
+  const { error: assignError } = await supabase.from("task_assignments").insert({
+    task_id: taskId,
+    member_id: completingMemberId,
+  });
+  if (assignError) return { error: assignError.message };
+
   return completeTask(taskId);
 }
 
@@ -527,7 +575,7 @@ export async function resetActivity(scoreLogId: string, sourceType: string, sour
 
     if (!task.recurring_daily) {
       await supabase.from("task_assignments").update({ completed_at: null }).eq("task_id", sourceId);
-      await supabase.from("tasks").update({ status: "taken" }).eq("id", sourceId);
+      await supabase.from("tasks").update({ status: "open" }).eq("id", sourceId);
     }
   } else if (sourceType === "sport" && sourceId) {
     const { data: act } = await supabase.from("sport_activities").select("id, member_id").eq("id", sourceId).single();

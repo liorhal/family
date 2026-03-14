@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   takeAndCompleteTask,
+  completeOpenTaskDirectly,
   releaseTask,
   completeTask,
   completeSportActivity,
@@ -45,6 +46,7 @@ interface OpenTask {
   id: string;
   title: string;
   score_value: number;
+  default_assignee_id?: string | null;
 }
 
 interface SportActivity {
@@ -114,11 +116,13 @@ export function DashboardTodayActivities({
     else router.refresh();
   }
 
-  async function handleTakeAndComplete(taskId: string) {
+  async function handleTakeAndComplete(taskId: string, hasDefaultAssignee: boolean) {
     const assigneeId = assigneeForTask[taskId];
     if (!assigneeId) return;
     setCompleting(taskId);
-    const res = await takeAndCompleteTask(taskId, assigneeId);
+    const res = hasDefaultAssignee
+      ? await takeAndCompleteTask(taskId, assigneeId)
+      : await completeOpenTaskDirectly(taskId, assigneeId);
     setCompleting(null);
     setAssigneeForTask((p) => {
       const next = { ...p };
@@ -360,7 +364,7 @@ export function DashboardTodayActivities({
                       />
                       <button
                         type="button"
-                        onClick={() => handleTakeAndComplete(t.id)}
+                        onClick={() => handleTakeAndComplete(t.id, !!t.default_assignee_id)}
                         disabled={completing === t.id || !assigneeForTask[t.id]}
                         className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-500/90 py-2.5 font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-70"
                       >

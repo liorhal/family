@@ -47,7 +47,19 @@ export default async function TodayPage() {
     (t.recurring_daily === true) ||
     isScheduledForDay(t.scheduled_days, dayOfWeek);
 
+  // Exclude tasks that have an active assignment (no "taken" status – assignments define "assigned")
+  const assignedTaskIds = new Set(
+    (takenAssignments ?? [])
+      .filter((a) => {
+        const t = (a as { tasks: unknown }).tasks;
+        if (!t || typeof t !== "object" || !("family_id" in t)) return false;
+        return (t as { family_id: string }).family_id === member.family_id;
+      })
+      .map((a) => (a as { task_id: string }).task_id)
+  );
+
   const openTasks = (openTasksRaw ?? [])
+    .filter((t) => !assignedTaskIds.has(t.id))
     .filter(isTaskRelevantToday)
     .sort((a, b) => {
       const aWeekly = (a.scheduled_days?.length ?? 0) > 0 ? 1 : 0;

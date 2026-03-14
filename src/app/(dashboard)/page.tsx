@@ -239,6 +239,17 @@ export default async function DashboardPage() {
     (t.recurring_daily === true) ||
     isScheduledForDay(t.scheduled_days, dayOfWeek);
 
+  // Exclude tasks that have an active assignment (no "taken" status – assignments define "assigned")
+  const assignedTaskIds = new Set(
+    (takenAssignments ?? [])
+      .filter((a) => {
+        const t = (a as { tasks: unknown }).tasks;
+        if (!t || typeof t !== "object" || !("family_id" in t)) return false;
+        return (t as { family_id: string }).family_id === familyId;
+      })
+      .map((a) => (a as { task_id: string }).task_id)
+  );
+
   const todayForDismissals = format(today, "yyyy-MM-dd");
   const { data: dismissalsRaw } = await supabase
     .from("activity_dismissals")
@@ -250,6 +261,7 @@ export default async function DashboardPage() {
   );
 
   const openTasks = (openTasksRaw ?? [])
+    .filter((t) => !assignedTaskIds.has(t.id))
     .filter(isTaskRelevantToday)
     .filter((t) => !dismissedSet.has(`house:${t.id}`))
     .sort((a, b) => {

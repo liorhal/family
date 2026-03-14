@@ -1,5 +1,5 @@
 export type MemberRole = "admin" | "kid";
-export type TaskStatus = "open" | "taken" | "completed" | "expired";
+export type TaskStatus = "open" | "completed" | "expired";
 export type SportType = "weekly" | "extra";
 export type SchoolTaskType = "homework" | "exam" | "project" | "research";
 export type ScoreSourceType = "house" | "sport" | "school" | "streak_bonus" | "bonus" | "fine" | "birthday_bonus";
