@@ -236,6 +236,18 @@ export async function takeTask(taskId: string, assigneeId: string) {
 
   if (assignError) {
     if (assignError.code === "23505") {
+      // Assignment already exists – if same member, treat as success (handles double-click/race)
+      const { data: existing } = await supabase
+        .from("task_assignments")
+        .select("member_id")
+        .eq("task_id", taskId)
+        .is("completed_at", null)
+        .maybeSingle();
+      if (existing?.member_id === assigneeId) {
+        revalidatePath("/");
+        revalidatePath("/today");
+        return { success: true };
+      }
       revalidatePath("/");
       revalidatePath("/today");
       return { error: "This task was just taken by another family member. Refresh the page to see the update." };
@@ -323,7 +335,22 @@ export async function completeOpenTaskDirectly(taskId: string, completingMemberI
     task_id: taskId,
     member_id: completingMemberId,
   });
-  if (assignError) return { error: assignError.message };
+  if (assignError) {
+    if (assignError.code === "23505") {
+      // Assignment already exists – if same member, complete it (handles double-click/race)
+      const { data: existing } = await supabase
+        .from("task_assignments")
+        .select("member_id")
+        .eq("task_id", taskId)
+        .is("completed_at", null)
+        .maybeSingle();
+      if (existing?.member_id === completingMemberId) {
+        return completeTask(taskId);
+      }
+      return { error: "This task was just assigned to another family member. Refresh the page to see the update." };
+    }
+    return { error: assignError.message };
+  }
 
   return completeTask(taskId);
 }
