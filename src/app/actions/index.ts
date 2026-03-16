@@ -892,13 +892,19 @@ async function getNewlyEarnedBadges(memberId: string): Promise<NewlyEarnedBadge[
   });
 
   const now = new Date().toISOString();
+  const actuallyEarned: RawBadgeProgress[] = [];
 
   for (const p of uniqueNewlyEarned) {
-    await supabase.from("badge_earnings").upsert(
-      { member_id: memberId, badge_id: p.badgeId, earned_at: now },
-      { onConflict: "member_id,badge_id" }
-    );
-    // Log all badges to activity log. 5pt bonus for all badge types
+    // Insert only – if 23505 (already exists), skip. Ensures each badge shows once even with race conditions.
+    const { error: insertErr } = await supabase.from("badge_earnings").insert({
+      member_id: memberId,
+      badge_id: p.badgeId,
+      earned_at: now,
+    });
+    if (insertErr?.code === "23505") continue; // Already earned, skip
+    if (insertErr) break; // Other error, stop processing
+
+    actuallyEarned.push(p);
     const scoreDelta = 5;
     await supabase.from("scores_log").insert({
       member_id: memberId,
@@ -909,7 +915,7 @@ async function getNewlyEarnedBadges(memberId: string): Promise<NewlyEarnedBadge[
     });
   }
 
-  return uniqueNewlyEarned.map((p) => ({ badgeId: p.badgeId, title: p.title, description: p.description }));
+  return actuallyEarned.map((p) => ({ badgeId: p.badgeId, title: p.title, description: p.description }));
 }
 
 export interface FamilyBadgeEntry extends BadgeProgress {
