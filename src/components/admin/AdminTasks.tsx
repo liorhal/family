@@ -183,7 +183,10 @@ export function AdminTasks({ tasks, members }: AdminTasksProps) {
                         members={members}
                         name="default_assignee_id"
                         value={editDefaultAssignee[t.id] ?? t.default_assignee_id ?? ""}
-                        onChange={(id) => setEditDefaultAssignee((p) => ({ ...p, [t.id]: id }))}
+                        onChange={(id) => {
+                          setEditDefaultAssignee((p) => ({ ...p, [t.id]: id }));
+                          setEditFormDirty(true);
+                        }}
                         label="Default assignee"
                       />
                     </div>

@@ -142,6 +142,7 @@ export function AdminSport({ activities, members }: AdminSportProps) {
                       const form = e.currentTarget;
                       handleEdit(a.id, new FormData(form));
                     }}
+                    onChange={() => setEditFormDirty(true)}
                     className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
