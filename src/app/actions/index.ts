@@ -426,7 +426,10 @@ export async function completeTask(taskId: string) {
   // 4. Update streak
   await updateStreak(targetMemberId, familyId);
 
-  const newlyEarnedBadges = await getNewlyEarnedBadges(targetMemberId);
+  const newlyEarnedBadges = await getNewlyEarnedBadges(targetMemberId, {
+    sourceType: "house",
+    sourceId: taskId,
+  });
   revalidatePath("/");
   revalidatePath("/today");
   revalidatePath("/admin");
@@ -495,7 +498,7 @@ export async function completeSportActivity(activityId: string, completingMember
 
   await updateStreak(targetMemberId, familyId);
 
-  const newlyEarnedBadges = await getNewlyEarnedBadges(targetMemberId);
+  const newlyEarnedBadges = await getNewlyEarnedBadges(targetMemberId, { sourceType: "sport" });
   revalidatePath("/");
   revalidatePath("/today");
   return { success: true, score: activity.score_value, newlyEarnedBadges };
@@ -556,7 +559,7 @@ export async function completeSchoolTask(taskId: string, completingMemberId?: st
 
   await updateStreak(targetMemberId, familyId);
 
-  const newlyEarnedBadges = await getNewlyEarnedBadges(targetMemberId);
+  const newlyEarnedBadges = await getNewlyEarnedBadges(targetMemberId, { sourceType: "school" });
   revalidatePath("/");
   revalidatePath("/today");
   return { success: true, score: task.score_value, newlyEarnedBadges };
@@ -717,6 +720,8 @@ interface RawBadgeProgress {
   threshold: number;
   earned: boolean;
   taskTitle?: string;
+  /** For master_of_task: the house task id this badge is for */
+  taskId?: string;
 }
 
 /** Internal: compute badge progress with raw (uncapped) current for "just earned" detection */
@@ -825,6 +830,7 @@ async function getBadgeProgressRaw(memberId: string): Promise<RawBadgeProgress[]
         threshold: th,
         earned: count >= th,
         taskTitle: task.title,
+        taskId: task.id,
       });
     }
   }
@@ -863,8 +869,10 @@ export async function getBadgeProgress(memberId: string): Promise<{ error?: stri
 /** Badge returned when just earned (used by completion actions) */
 export type NewlyEarnedBadge = { badgeId: string; title: string; description: string };
 
-/** Returns badges just earned (rawCurrent === threshold). Records in badge_earnings, awards 5pt for all badge types. */
-async function getNewlyEarnedBadges(memberId: string): Promise<NewlyEarnedBadge[]> {
+type BadgeSourceContext = { sourceType: "house"; sourceId: string } | { sourceType: "sport" } | { sourceType: "school" };
+
+/** Returns badges just earned (rawCurrent === threshold). Only returns badges relevant to the completion. */
+async function getNewlyEarnedBadges(memberId: string, context: BadgeSourceContext): Promise<NewlyEarnedBadge[]> {
   const raw = await getBadgeProgressRaw(memberId);
   if (!raw) return [];
 
@@ -878,14 +886,28 @@ async function getNewlyEarnedBadges(memberId: string): Promise<NewlyEarnedBadge[
   const alreadyEarnedIds = new Set((existingEarnings ?? []).map((e) => e.badge_id));
 
   // Newly earned = exactly at threshold, not already in badge_earnings
-  const newlyEarned = raw.filter(
+  let candidates = raw.filter(
     (p) => p.earned && p.rawCurrent === p.threshold && !alreadyEarnedIds.has(p.badgeId)
   );
-  if (newlyEarned.length === 0) return [];
+
+  // Only return badges relevant to THIS completion (prevents wrong badges)
+  if (context.sourceType === "house") {
+    candidates = candidates.filter(
+      (p) =>
+        p.type === "general_streak" ||
+        (p.type === "master_of_task" && p.taskId === context.sourceId)
+    );
+  } else if (context.sourceType === "sport") {
+    candidates = candidates.filter((p) => p.type === "general_streak" || p.type === "sports_streak");
+  } else {
+    candidates = candidates.filter((p) => p.type === "general_streak");
+  }
+
+  if (candidates.length === 0) return [];
 
   // Deduplicate by badgeId (each badge can only show once)
   const seen = new Set<string>();
-  const uniqueNewlyEarned = newlyEarned.filter((p) => {
+  const uniqueNewlyEarned = candidates.filter((p) => {
     if (seen.has(p.badgeId)) return false;
     seen.add(p.badgeId);
     return true;
