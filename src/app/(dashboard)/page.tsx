@@ -35,8 +35,10 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardTodayActivities } from "@/components/dashboard/DashboardTodayActivities";
 import { PodiumLeaderboard } from "@/components/dashboard/PodiumLeaderboard";
 import { RealtimeLeaderboard } from "@/components/dashboard/RealtimeLeaderboard";
-import { Calendar } from "lucide-react";
+import Link from "next/link";
+import { Calendar, Sparkles } from "lucide-react";
 import { FeelingLuckyButton } from "@/components/dashboard/FeelingLuckyButton";
+import { Button } from "@/components/ui/button";
 
 export default async function DashboardPage() {
   // #region agent log
@@ -486,6 +488,13 @@ export default async function DashboardPage() {
           target={family?.jar_target ?? 1500}
           prize={family?.jar_prize ?? "1,500 points = Family Movie Night 🍿"}
         />
+
+        <Button variant="outline" className="w-full gap-2 border-violet-200 bg-violet-50/50 hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950/30 dark:hover:bg-violet-900/50" asChild>
+          <Link href="/monthly-summary">
+            <Sparkles className="h-4 w-4 text-violet-600" />
+            Month in Review
+          </Link>
+        </Button>
       </div>
 
       <DashboardTodayActivities

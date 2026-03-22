@@ -1388,3 +1388,200 @@ export async function deleteSchoolTask(taskId: string) {
   revalidatePath("/today");
   return { success: true };
 }
+
+/** Month summary data for the slideshow (Spotify Wrapped style) */
+export interface MonthSummarySlide {
+  type: "title" | "favorite_per_member" | "top_per_activity" | "busiest_weekday" | "top_badges" | "mvp" | "total_points";
+  month: string;
+  year: number;
+  memberName?: string;
+  memberAvatarUrl?: string | null;
+  activityTitle?: string;
+  activityCount?: number;
+  activityType?: "house" | "sport" | "school";
+  activityTitle2?: string;
+  championName?: string;
+  championAvatarUrl?: string | null;
+  championCount?: number;
+  weekdayName?: string;
+  weekdayAvg?: number;
+  badges?: { title: string; description: string }[];
+  mvpName?: string;
+  mvpAvatarUrl?: string | null;
+  mvpScore?: number;
+  totalScore?: number;
+}
+
+export async function getMonthSummary(): Promise<{ error?: string; data?: MonthSummarySlide[] }> {
+  const { member, familyId } = await getCurrentMember();
+  if (!member || !familyId) return { error: "Unauthorized" };
+
+  const supabase = await createClient();
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  const monthName = monthStart.toLocaleString("default", { month: "long" });
+  const year = monthStart.getFullYear();
+
+  const { data: members } = await supabase
+    .from("members")
+    .select("id, name, avatar_url")
+    .eq("family_id", familyId);
+  if (!members?.length) return { data: [] };
+
+  const memberIds = members.map((m) => m.id);
+
+  const { data: scores } = await supabase
+    .from("scores_log")
+    .select("member_id, source_type, source_id, score_delta, created_at")
+    .in("member_id", memberIds)
+    .gte("created_at", monthStart.toISOString())
+    .lte("created_at", monthEnd.toISOString());
+
+  const activityScores = (scores ?? []).filter(
+    (s) => (s.source_type === "house" || s.source_type === "sport" || s.source_type === "school") && s.source_id
+  );
+
+  const houseIds = activityScores.filter((s) => s.source_type === "house").map((s) => s.source_id as string);
+  const sportIds = activityScores.filter((s) => s.source_type === "sport").map((s) => s.source_id as string);
+  const schoolIds = activityScores.filter((s) => s.source_type === "school").map((s) => s.source_id as string);
+
+  const [houseTasks, sportActivities, schoolTasks] = await Promise.all([
+    houseIds.length ? supabase.from("tasks").select("id, title").in("id", Array.from(new Set(houseIds))) : { data: [] as { id: string; title: string }[] },
+    sportIds.length ? supabase.from("sport_activities").select("id, title").in("id", Array.from(new Set(sportIds))) : { data: [] as { id: string; title: string }[] },
+    schoolIds.length ? supabase.from("school_tasks").select("id, title").in("id", Array.from(new Set(schoolIds))) : { data: [] as { id: string; title: string }[] },
+  ]);
+
+  const titleMap: Record<string, string> = {};
+  for (const t of houseTasks.data ?? []) titleMap[`house:${t.id}`] = t.title;
+  for (const a of sportActivities.data ?? []) titleMap[`sport:${a.id}`] = a.title;
+  for (const t of schoolTasks.data ?? []) titleMap[`school:${t.id}`] = t.title;
+
+  const slides: MonthSummarySlide[] = [];
+  slides.push({ type: "title", month: monthName, year });
+
+  const memberNameMap = Object.fromEntries(members.map((m) => [m.id, m.name]));
+  const memberAvatarMap = Object.fromEntries(members.map((m) => [m.id, m.avatar_url]));
+
+  const countsByMemberAndSource: Record<string, Record<string, number>> = {};
+  for (const s of activityScores) {
+    const key = `${s.source_type}:${s.source_id}`;
+    countsByMemberAndSource[s.member_id] ??= {};
+    countsByMemberAndSource[s.member_id][key] = (countsByMemberAndSource[s.member_id][key] ?? 0) + 1;
+  }
+  for (const m of members) {
+    const counts = countsByMemberAndSource[m.id];
+    if (!counts) continue;
+    const [topKey, topCount] = Object.entries(counts).sort(([, a], [, b]) => b - a)[0] ?? [];
+    if (!topKey || !topCount) continue;
+    const activityTitle = titleMap[topKey] ?? "Activity";
+    slides.push({
+      type: "favorite_per_member",
+      month: monthName,
+      year,
+      memberName: m.name,
+      memberAvatarUrl: m.avatar_url,
+      activityTitle,
+      activityCount: topCount,
+      activityType: (topKey.split(":")[0] as "house" | "sport" | "school"),
+    });
+  }
+
+  const countsBySourceAndMember: Record<string, Record<string, number>> = {};
+  for (const s of activityScores) {
+    const key = `${s.source_type}:${s.source_id}`;
+    countsBySourceAndMember[key] ??= {};
+    countsBySourceAndMember[key][s.member_id] = (countsBySourceAndMember[key][s.member_id] ?? 0) + 1;
+  }
+  const topActivities = Object.entries(countsBySourceAndMember)
+    .map(([key, memberCounts]) => {
+      const [champId, champCount] = Object.entries(memberCounts).sort(([, a], [, b]) => b - a)[0] ?? [];
+      return { key, title: titleMap[key] ?? "Activity", champId, champCount: champCount ?? 0 };
+    })
+    .filter((a) => a.champId && a.champCount > 0)
+    .sort((a, b) => b.champCount - a.champCount)
+    .slice(0, 5);
+  for (const a of topActivities) {
+    slides.push({
+      type: "top_per_activity",
+      month: monthName,
+      year,
+      activityTitle2: a.title,
+      championName: a.champId ? memberNameMap[a.champId] : undefined,
+      championAvatarUrl: a.champId ? memberAvatarMap[a.champId] : undefined,
+      championCount: a.champCount,
+    });
+  }
+
+  const byWeekday: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+  for (const s of activityScores) {
+    const day = new Date(s.created_at).getDay();
+    byWeekday[day]++;
+  }
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const busiest = (Object.entries(byWeekday) as [string, number][])
+    .map(([d, count]) => ({ day: Number(d), name: dayNames[Number(d)], count }))
+    .filter((a) => a.count > 0)
+    .sort((a, b) => b.count - a.count)[0];
+  if (busiest) {
+    slides.push({
+      type: "busiest_weekday",
+      month: monthName,
+      year,
+      weekdayName: busiest.name,
+      weekdayAvg: busiest.count,
+    });
+  }
+
+  const { data: badgeEarnings } = await supabase
+    .from("badge_earnings")
+    .select("badge_id")
+    .in("member_id", memberIds)
+    .gte("earned_at", monthStart.toISOString())
+    .lte("earned_at", monthEnd.toISOString());
+
+  if (badgeEarnings?.length) {
+    const { GENERAL_STREAK_BADGES, SPORTS_STREAK_BADGES, getMasterOfTaskBadge, MASTER_THRESHOLDS } = await import("@/lib/badges");
+    const { data: familyTasks } = await supabase.from("tasks").select("id, title").eq("family_id", familyId);
+    const badgeDefMap: Record<string, { title: string; description: string }> = {};
+    for (const b of GENERAL_STREAK_BADGES) badgeDefMap[b.id] = { title: b.title, description: b.description };
+    for (const b of SPORTS_STREAK_BADGES) badgeDefMap[b.id] = { title: b.title, description: b.description };
+    for (const t of familyTasks ?? []) {
+      for (const th of MASTER_THRESHOLDS) {
+        const badge = getMasterOfTaskBadge(t.title, th, t.id);
+        badgeDefMap[badge.id] = { title: badge.title, description: badge.description };
+      }
+    }
+    const badges = Array.from(new Set(badgeEarnings.map((e) => e.badge_id)))
+      .map((id) => badgeDefMap[id])
+      .filter(Boolean)
+      .slice(0, 5);
+    if (badges.length) {
+      slides.push({ type: "top_badges", month: monthName, year, badges });
+    }
+  }
+
+  const monthlyByMember: Record<string, number> = {};
+  for (const s of scores ?? []) {
+    const delta = s.source_type === "fine" ? -s.score_delta : s.score_delta;
+    monthlyByMember[s.member_id] = (monthlyByMember[s.member_id] ?? 0) + delta;
+  }
+  const mvpEntry = Object.entries(monthlyByMember).sort(([, a], [, b]) => b - a)[0];
+  if (mvpEntry) {
+    const [mvpId, mvpScore] = mvpEntry;
+    const mvpMember = members.find((m) => m.id === mvpId);
+    slides.push({
+      type: "mvp",
+      month: monthName,
+      year,
+      mvpName: mvpMember?.name,
+      mvpAvatarUrl: mvpMember?.avatar_url,
+      mvpScore,
+    });
+  }
+
+  const totalScore = Object.values(monthlyByMember).reduce((sum, n) => sum + n, 0);
+  slides.push({ type: "total_points", month: monthName, year, totalScore });
+
+  return { data: slides };
+}
