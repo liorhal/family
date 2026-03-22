@@ -1390,8 +1390,15 @@ export async function deleteSchoolTask(taskId: string) {
 }
 
 /** Month summary data for the slideshow (Spotify Wrapped style) */
+export interface ActivityChampion {
+  activityTitle: string;
+  championName: string;
+  championAvatarUrl?: string | null;
+  championCount: number;
+}
+
 export interface MonthSummarySlide {
-  type: "title" | "favorite_per_member" | "top_per_activity" | "busiest_weekday" | "top_badges" | "mvp" | "total_points";
+  type: "title" | "favorite_per_member" | "activity_champions" | "busiest_weekday" | "highest_day" | "top_badges" | "mvp" | "total_points";
   month: string;
   year: number;
   memberName?: string;
@@ -1399,12 +1406,12 @@ export interface MonthSummarySlide {
   activityTitle?: string;
   activityCount?: number;
   activityType?: "house" | "sport" | "school";
-  activityTitle2?: string;
-  championName?: string;
-  championAvatarUrl?: string | null;
-  championCount?: number;
+  champions?: ActivityChampion[];
   weekdayName?: string;
   weekdayAvg?: number;
+  highestDayDate?: string;
+  highestDayCount?: number;
+  highestDayPoints?: number;
   badges?: { title: string; description: string }[];
   mvpName?: string;
   mvpAvatarUrl?: string | null;
@@ -1500,16 +1507,18 @@ export async function getMonthSummary(): Promise<{ error?: string; data?: MonthS
     })
     .filter((a) => a.champId && a.champCount > 0)
     .sort((a, b) => b.champCount - a.champCount)
-    .slice(0, 5);
-  for (const a of topActivities) {
+    .slice(0, 10);
+  if (topActivities.length > 0) {
     slides.push({
-      type: "top_per_activity",
+      type: "activity_champions",
       month: monthName,
       year,
-      activityTitle2: a.title,
-      championName: a.champId ? memberNameMap[a.champId] : undefined,
-      championAvatarUrl: a.champId ? memberAvatarMap[a.champId] : undefined,
-      championCount: a.champCount,
+      champions: topActivities.map((a) => ({
+        activityTitle: a.title,
+        championName: memberNameMap[a.champId!] ?? "—",
+        championAvatarUrl: memberAvatarMap[a.champId!],
+        championCount: a.champCount,
+      })),
     });
   }
 
@@ -1530,6 +1539,30 @@ export async function getMonthSummary(): Promise<{ error?: string; data?: MonthS
       year,
       weekdayName: busiest.name,
       weekdayAvg: busiest.count,
+    });
+  }
+
+  const byDate: Record<string, { count: number; points: number }> = {};
+  for (const s of scores ?? []) {
+    const dateKey = new Date(s.created_at).toISOString().split("T")[0];
+    byDate[dateKey] ??= { count: 0, points: 0 };
+    byDate[dateKey].count++;
+    const delta = s.source_type === "fine" ? -s.score_delta : s.score_delta;
+    byDate[dateKey].points += delta;
+  }
+  const highestDay = (Object.entries(byDate) as [string, { count: number; points: number }][])
+    .filter(([, v]) => v.count > 0)
+    .sort((a, b) => b[1].count - a[1].count)[0];
+  if (highestDay) {
+    const [dateStr, { count, points }] = highestDay;
+    const d = new Date(dateStr);
+    slides.push({
+      type: "highest_day",
+      month: monthName,
+      year,
+      highestDayDate: d.toLocaleDateString("default", { weekday: "long", month: "long", day: "numeric" }),
+      highestDayCount: count,
+      highestDayPoints: points,
     });
   }
 

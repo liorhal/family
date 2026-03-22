@@ -81,26 +81,51 @@ export function MonthSummarySlideshow({ slides }: MonthSummarySlideshowProps) {
                 </>
               )}
 
-              {current.type === "top_per_activity" && current.activityTitle2 && current.championName && (
+              {current.type === "activity_champions" && current.champions?.length && (
                 <>
                   <p className="text-xs font-medium uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                    Activity champion
+                    Activity champions
                   </p>
-                  <MemberAvatar name={current.championName} avatarUrl={current.championAvatarUrl} size="lg" className="mx-auto mt-3" />
-                  <p className="mt-3 text-lg font-semibold text-slate-800 dark:text-slate-100">Champion of</p>
-                  <p className="mt-1 text-xl font-bold text-violet-700 dark:text-violet-300">&quot;{current.activityTitle2}&quot;</p>
-                  <p className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400">{current.championCount} completions</p>
+                  <div className="mt-4 max-h-[280px] space-y-2 overflow-y-auto">
+                    {current.champions.map((c, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between gap-3 rounded-lg bg-violet-100/80 px-4 py-2 dark:bg-violet-900/30"
+                      >
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <MemberAvatar name={c.championName} avatarUrl={c.championAvatarUrl} size="sm" className="shrink-0" />
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-slate-800 dark:text-slate-100">&quot;{c.activityTitle}&quot;</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">{c.championName}</p>
+                          </div>
+                        </div>
+                        <span className="shrink-0 font-bold text-amber-600 dark:text-amber-400">{c.championCount}×</span>
+                      </div>
+                    ))}
+                  </div>
                 </>
               )}
 
               {current.type === "busiest_weekday" && current.weekdayName && (
                 <>
                   <p className="text-xs font-medium uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                    Most productive day
+                    Most productive weekday
                   </p>
                   <p className="mt-4 text-5xl font-bold text-violet-700 dark:text-violet-300">{current.weekdayName}s</p>
                   <p className="mt-2 text-slate-600 dark:text-slate-400">
                     {current.weekdayAvg} activities this month
+                  </p>
+                </>
+              )}
+
+              {current.type === "highest_day" && current.highestDayDate && (
+                <>
+                  <p className="text-xs font-medium uppercase tracking-wider text-violet-600 dark:text-violet-400">
+                    Highest day
+                  </p>
+                  <p className="mt-4 text-2xl font-bold text-violet-700 dark:text-violet-300 sm:text-3xl">{current.highestDayDate}</p>
+                  <p className="mt-2 text-lg font-semibold text-amber-600 dark:text-amber-400">
+                    {current.highestDayCount} activities · {current.highestDayPoints ?? 0} pts
                   </p>
                 </>
               )}
