@@ -1390,29 +1390,48 @@ export async function deleteSchoolTask(taskId: string) {
 }
 
 /** Month summary data for the slideshow (Spotify Wrapped style) */
-export interface ActivityChampion {
-  activityTitle: string;
-  championName: string;
-  championAvatarUrl?: string | null;
-  championCount: number;
+export interface MemberTopActivity {
+  title: string;
+  count: number;
+  activityType: "house" | "sport" | "school";
+}
+
+export interface ActivityTopMember {
+  name: string;
+  avatarUrl?: string | null;
+  count: number;
 }
 
 export interface MonthSummarySlide {
-  type: "title" | "favorite_per_member" | "activity_champions" | "busiest_weekday" | "highest_day" | "top_badges" | "mvp" | "total_points";
+  type:
+    | "title"
+    | "favorite_per_member"
+    | "activity_champion"
+    | "busiest_weekday"
+    | "highest_day"
+    | "top_badges"
+    | "community_jar"
+    | "mvp"
+    | "total_points";
   month: string;
   year: number;
   memberName?: string;
   memberAvatarUrl?: string | null;
+  /** Up to 2 top activities for the member slide */
+  memberTopActivities?: MemberTopActivity[];
+  /** Activity champion slide: activity name */
   activityTitle?: string;
-  activityCount?: number;
-  activityType?: "house" | "sport" | "school";
-  champions?: ActivityChampion[];
+  /** Top 2 members for that activity */
+  topMembers?: ActivityTopMember[];
   weekdayName?: string;
   weekdayAvg?: number;
   highestDayDate?: string;
   highestDayCount?: number;
   highestDayPoints?: number;
   badges?: { title: string; description: string }[];
+  jarTarget?: number;
+  jarActual?: number;
+  jarPrize?: string;
   mvpName?: string;
   mvpAvatarUrl?: string | null;
   mvpScore?: number;
@@ -1435,6 +1454,14 @@ export async function getMonthSummary(): Promise<{ error?: string; data?: MonthS
     .select("id, name, avatar_url")
     .eq("family_id", familyId);
   if (!members?.length) return { data: [] };
+
+  const { data: familyJar } = await supabase
+    .from("families")
+    .select("jar_target, jar_prize")
+    .eq("id", familyId)
+    .single();
+  const jarTarget = Math.max(1, familyJar?.jar_target ?? 1500);
+  const jarPrize = familyJar?.jar_prize?.trim() || "Family reward unlocked! 🎉";
 
   const memberIds = members.map((m) => m.id);
 
@@ -1479,18 +1506,23 @@ export async function getMonthSummary(): Promise<{ error?: string; data?: MonthS
   for (const m of members) {
     const counts = countsByMemberAndSource[m.id];
     if (!counts) continue;
-    const [topKey, topCount] = Object.entries(counts).sort(([, a], [, b]) => b - a)[0] ?? [];
-    if (!topKey || !topCount) continue;
-    const activityTitle = titleMap[topKey] ?? "Activity";
+    const sorted = Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 2)
+      .filter(([, c]) => c > 0);
+    if (!sorted.length) continue;
+    const memberTopActivities: MemberTopActivity[] = sorted.map(([key, count]) => ({
+      title: titleMap[key] ?? "Activity",
+      count,
+      activityType: key.split(":")[0] as "house" | "sport" | "school",
+    }));
     slides.push({
       type: "favorite_per_member",
       month: monthName,
       year,
       memberName: m.name,
       memberAvatarUrl: m.avatar_url,
-      activityTitle,
-      activityCount: topCount,
-      activityType: (topKey.split(":")[0] as "house" | "sport" | "school"),
+      memberTopActivities,
     });
   }
 
@@ -1500,24 +1532,28 @@ export async function getMonthSummary(): Promise<{ error?: string; data?: MonthS
     countsBySourceAndMember[key] ??= {};
     countsBySourceAndMember[key][s.member_id] = (countsBySourceAndMember[key][s.member_id] ?? 0) + 1;
   }
-  const topActivities = Object.entries(countsBySourceAndMember)
+  const activityChampionSlides = Object.entries(countsBySourceAndMember)
     .map(([key, memberCounts]) => {
-      const [champId, champCount] = Object.entries(memberCounts).sort(([, a], [, b]) => b - a)[0] ?? [];
-      return { key, title: titleMap[key] ?? "Activity", champId, champCount: champCount ?? 0 };
+      const topTwo = Object.entries(memberCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 2)
+        .filter(([, c]) => c > 0);
+      const totalCompletions = Object.values(memberCounts).reduce((a, b) => a + b, 0);
+      return { key, title: titleMap[key] ?? "Activity", topTwo, totalCompletions };
     })
-    .filter((a) => a.champId && a.champCount > 0)
-    .sort((a, b) => b.champCount - a.champCount)
+    .filter((a) => a.topTwo.length > 0)
+    .sort((a, b) => b.totalCompletions - a.totalCompletions)
     .slice(0, 10);
-  if (topActivities.length > 0) {
+  for (const a of activityChampionSlides) {
     slides.push({
-      type: "activity_champions",
+      type: "activity_champion",
       month: monthName,
       year,
-      champions: topActivities.map((a) => ({
-        activityTitle: a.title,
-        championName: memberNameMap[a.champId!] ?? "—",
-        championAvatarUrl: memberAvatarMap[a.champId!],
-        championCount: a.champCount,
+      activityTitle: a.title,
+      topMembers: a.topTwo.map(([id, count]) => ({
+        name: memberNameMap[id] ?? "—",
+        avatarUrl: memberAvatarMap[id],
+        count,
       })),
     });
   }
@@ -1614,6 +1650,16 @@ export async function getMonthSummary(): Promise<{ error?: string; data?: MonthS
   }
 
   const totalScore = Object.values(monthlyByMember).reduce((sum, n) => sum + n, 0);
+  if (totalScore >= jarTarget) {
+    slides.push({
+      type: "community_jar",
+      month: monthName,
+      year,
+      jarTarget,
+      jarActual: totalScore,
+      jarPrize,
+    });
+  }
   slides.push({ type: "total_points", month: monthName, year, totalScore });
 
   return { data: slides };

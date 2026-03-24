@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MemberAvatar } from "@/components/MemberAvatar";
 import { CategoryIcon } from "@/lib/category-icons";
-import { ChevronLeft, ChevronRight, Award, Trophy } from "lucide-react";
+import { ChevronLeft, ChevronRight, Award, Trophy, PartyPopper } from "lucide-react";
 import type { MonthSummarySlide } from "@/app/actions";
 
 interface MonthSummarySlideshowProps {
@@ -64,42 +64,45 @@ export function MonthSummarySlideshow({ slides }: MonthSummarySlideshowProps) {
                 </>
               )}
 
-              {current.type === "favorite_per_member" && current.memberName && current.activityTitle && (
+              {current.type === "favorite_per_member" && current.memberName && current.memberTopActivities?.length && (
                 <>
                   <p className="text-xs font-medium uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                    Favorite activity
+                    Top activities
                   </p>
                   <MemberAvatar name={current.memberName} avatarUrl={current.memberAvatarUrl} size="lg" className="mx-auto mt-3" />
-                  <p className="mt-3 text-xl font-semibold text-slate-800 dark:text-slate-100">{current.memberName}&apos;s top pick</p>
-                  <div className="mt-2 flex items-center justify-center gap-2">
-                    {current.activityType && (
-                      <CategoryIcon type={current.activityType} size="sm" className="shrink-0" />
-                    )}
-                    <span className="text-lg font-medium text-violet-700 dark:text-violet-300">&quot;{current.activityTitle}&quot;</span>
+                  <p className="mt-3 text-xl font-semibold text-slate-800 dark:text-slate-100">{current.memberName}</p>
+                  <div className="mt-4 w-full max-w-md space-y-3">
+                    {current.memberTopActivities.map((act, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between gap-3 rounded-xl bg-violet-100/80 px-4 py-3 dark:bg-violet-900/30"
+                      >
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <CategoryIcon type={act.activityType} size="sm" className="shrink-0" />
+                          <span className="truncate font-medium text-violet-800 dark:text-violet-200">&quot;{act.title}&quot;</span>
+                        </div>
+                        <span className="shrink-0 text-xl font-bold text-amber-600 dark:text-amber-400">{act.count}×</span>
+                      </div>
+                    ))}
                   </div>
-                  <p className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">{current.activityCount}×</p>
                 </>
               )}
 
-              {current.type === "activity_champions" && current.champions?.length && (
+              {current.type === "activity_champion" && current.activityTitle && current.topMembers?.length && (
                 <>
                   <p className="text-xs font-medium uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                    Activity champions
+                    Activity champion
                   </p>
-                  <div className="mt-4 max-h-[280px] space-y-2 overflow-y-auto">
-                    {current.champions.map((c, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between gap-3 rounded-lg bg-violet-100/80 px-4 py-2 dark:bg-violet-900/30"
-                      >
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                          <MemberAvatar name={c.championName} avatarUrl={c.championAvatarUrl} size="sm" className="shrink-0" />
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold text-slate-800 dark:text-slate-100">&quot;{c.activityTitle}&quot;</p>
-                            <p className="text-xs text-slate-600 dark:text-slate-400">{c.championName}</p>
-                          </div>
-                        </div>
-                        <span className="shrink-0 font-bold text-amber-600 dark:text-amber-400">{c.championCount}×</span>
+                  <p className="mt-2 text-xl font-bold text-violet-800 dark:text-violet-200 sm:text-2xl">&quot;{current.activityTitle}&quot;</p>
+                  <div className="mt-6 flex w-full max-w-lg flex-wrap items-start justify-center gap-6">
+                    {current.topMembers.map((tm, i) => (
+                      <div key={i} className="flex flex-col items-center gap-2">
+                        <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                          {i === 0 ? "1st" : "2nd"}
+                        </span>
+                        <MemberAvatar name={tm.name} avatarUrl={tm.avatarUrl} size="lg" />
+                        <p className="max-w-[8rem] truncate text-center font-semibold text-slate-800 dark:text-slate-100">{tm.name}</p>
+                        <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{tm.count}×</p>
                       </div>
                     ))}
                   </div>
@@ -144,6 +147,20 @@ export function MonthSummarySlideshow({ slides }: MonthSummarySlideshowProps) {
                       </div>
                     ))}
                   </div>
+                </>
+              )}
+
+              {current.type === "community_jar" && current.jarTarget != null && current.jarActual != null && (
+                <>
+                  <PartyPopper className="mx-auto h-14 w-14 text-amber-500" />
+                  <p className="mt-3 text-xs font-medium uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                    Community jar unlocked
+                  </p>
+                  <h2 className="mt-2 text-2xl font-bold text-slate-800 dark:text-slate-100 sm:text-3xl">You crushed the goal!</h2>
+                  <p className="mt-3 text-lg font-semibold text-amber-700 dark:text-amber-300">
+                    {current.jarActual.toLocaleString()} / {current.jarTarget.toLocaleString()} pts
+                  </p>
+                  <p className="mt-4 max-w-sm text-base text-slate-700 dark:text-slate-300">{current.jarPrize}</p>
                 </>
               )}
 
